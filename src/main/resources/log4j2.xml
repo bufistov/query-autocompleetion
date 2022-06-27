@@ -1,0 +1,15 @@
+<Configuration name="ConfigTest" status="ERROR" monitorInterval="5">
+    <Appenders>
+        <Console name="Out">
+            <PatternLayout pattern="%d [%t] %-5level - %m%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Out"/>
+        </Root>
+        <Logger name="org.bufistov" level="debug" additivity="false">
+            <AppenderRef ref="Out"/>
+        </Logger>
+    </Loggers>
+</Configuration>

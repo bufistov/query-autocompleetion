@@ -13,10 +13,18 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation('org.springframework.boot:spring-boot-starter-web') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    // https://mvnrepository.com/artifact/com.datastax.cassandra/cassandra-driver-core
+    implementation 'com.datastax.cassandra:cassandra-driver-core:3.11.2'
+    implementation 'com.datastax.cassandra:cassandra-driver-mapping:3.11.2'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testImplementation 'org.cassandraunit:cassandra-unit:4.3.1.0'
 }
 
 test {

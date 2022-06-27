@@ -5,10 +5,16 @@ CREATE KEYSPACE IF NOT EXISTS autocompletedemo
   };
 
 CREATE TABLE IF NOT EXISTS autocompletedemo.query_count (
-  prefix text, count counter,
-  PRIMARY KEY (prefix));
+  query text, count counter,
+  PRIMARY KEY (query));
+
+CREATE TYPE IF NOT EXISTS autocompletedemo.PrefixCount(
+  suffix text,
+  count bigint
+);
 
 CREATE TABLE IF NOT EXISTS autocompletedemo.prefix_topk (
-  prefix text, topK set<frozen<tuple<text, bigint>>>,
+  prefix text,
+  topK set<frozen<PrefixCount>>,
   PRIMARY KEY (prefix)
 );

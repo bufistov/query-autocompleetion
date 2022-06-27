@@ -20,7 +20,7 @@ public class QueryComplete {
 
     @GetMapping(value = "/queries", produces = {MediaType.APPLICATION_JSON_VALUE})
     public TopKQueries queries(@RequestParam("prefix") String prefix) {
-        return TopKQueries.builder().queries(queryHandler.getQueries(prefix)).build();
+        return queryHandler.getQueries(prefix);
     }
 
     @PostMapping(value = "/add_query", consumes = {MediaType.TEXT_PLAIN_VALUE})
