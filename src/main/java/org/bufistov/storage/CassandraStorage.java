@@ -4,31 +4,24 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import org.bufistov.exception.DependencyException;
-import org.bufistov.model.CompletionCount;
-import org.bufistov.model.PrefixTopK;
-import org.bufistov.model.QueryCounter;
-import org.bufistov.model.UpdateCounter;
+import org.bufistov.model.*;
 
+import java.util.Optional;
 import java.util.Set;
 
 public class CassandraStorage implements Storage {
-
-   private final Session session;
    private final Mapper<QueryCounter> queryCounterMapper;
 
-    private final Mapper<PrefixTopK> topKMapper;
+    private final Mapper<PrefixTopKCassandra> topKMapper;
 
     private final UpdateCounter updateCounter;
+    private final UpdateTopK updateTopK;
 
-    public CassandraStorage(Session session, MappingManager manager) {
-        this.session = session;
+    public CassandraStorage(MappingManager manager) {
         this.queryCounterMapper = manager.mapper(QueryCounter.class);
-        this.topKMapper = manager.mapper(PrefixTopK.class);
+        this.topKMapper = manager.mapper(PrefixTopKCassandra.class);
         this.updateCounter = manager.createAccessor(UpdateCounter.class);
-    }
-
-    public Session getSession() {
-        return this.session;
+        this.updateTopK = manager.createAccessor(UpdateTopK.class);
     }
 
     @Override
@@ -42,19 +35,17 @@ public class CassandraStorage implements Storage {
     }
 
     @Override
-    public Set<CompletionCount> getTopKQueries(String prefix) {
-        var result = topKMapper.get(PrefixTopK.builder().prefix(prefix).build());
-        if (result == null) {
-            return Set.of();
-        }
-        return result.getTopK();
+    public PrefixTopK getTopKQueries(String prefix) {
+        return Optional.ofNullable(topKMapper.get(prefix))
+                .map(item -> PrefixTopK.builder().topK(item.getTopK()).version(item.getVersion()).build())
+                .orElse(PrefixTopK.builder().topK(Set.of()).build());
     }
 
     @Override
-    public void updateTopKQueries(String prefix, Set<CompletionCount> newTopK) {
-        topKMapper.save(PrefixTopK.builder()
-                        .prefix(prefix)
-                        .topK(newTopK)
-                .build());
+    public boolean updateTopKQueries(String prefix, Set<CompletionCount> newTopK, Long version) {
+        if (version == null) {
+            return updateTopK.updateTopKIfVersionIsNull(prefix, newTopK).wasApplied();
+        }
+        return updateTopK.updateTopK(prefix, newTopK, version, version + 1).wasApplied();
     }
 }

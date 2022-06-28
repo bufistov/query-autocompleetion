@@ -16,5 +16,6 @@ CREATE TYPE IF NOT EXISTS autocompletedemo.PrefixCount(
 CREATE TABLE IF NOT EXISTS autocompletedemo.prefix_topk (
   prefix text,
   topK set<frozen<PrefixCount>>,
+  version bigint,
   PRIMARY KEY (prefix)
 );
