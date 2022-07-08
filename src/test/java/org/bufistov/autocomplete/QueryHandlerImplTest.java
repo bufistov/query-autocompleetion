@@ -10,9 +10,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -26,9 +29,12 @@ public class QueryHandlerImplTest {
     private final static long TOPK = 3;
     private final static long MAX_RETRIES_TO_UPDATE_TOPK = 10;
 
+    private final static long OLD_COUNTER_VALUE = 1;
     private final static long NEW_COUNTER_VALUE = 2;
 
-    private final static String QUERY = "query";
+    private final static String QUERY = "que";
+
+    private final static long VERSION = 1;
 
     @Mock
     RandomInterval randomInterval;
@@ -55,10 +61,13 @@ public class QueryHandlerImplTest {
         when(storage.getTopKQueries(anyString())).thenAnswer((args) -> {
             String prefix = args.getArgument(0, String.class);
             String suffix = QUERY.substring(prefix.length());
-            return PrefixTopK.builder().topK(Set.of(CompletionCount.builder()
-                            .count(1L)
+            return PrefixTopK.builder()
+                    .topK(Set.of(CompletionCount.builder()
+                            .count(OLD_COUNTER_VALUE)
                             .suffix(suffix)
-                    .build())).build();
+                    .build()))
+                    .version(VERSION)
+                    .build();
         });
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
@@ -72,5 +81,19 @@ public class QueryHandlerImplTest {
         verify(storage, times(1)).addQuery(anyString());
         assertEquals(QUERY, queryCaptor.getValue());
         verify(storage, times(QUERY.length())).getTopKQueries(anyString());
+        assertThat(versionCaptor.getAllValues(), is(List.of(VERSION, VERSION, VERSION)));
+        assertThat(topKCaptor.getAllValues(), is(List.of(
+                Set.of(getSuffixCount("", NEW_COUNTER_VALUE)),
+                Set.of(getSuffixCount("e", NEW_COUNTER_VALUE)),
+                Set.of(getSuffixCount("ue", NEW_COUNTER_VALUE))
+        )));
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY, "qu", "q")));
+    }
+
+    private CompletionCount getSuffixCount(String suffix, long count) {
+        return CompletionCount.builder()
+                .count(count)
+                .suffix(suffix)
+                .build();
     }
 }
