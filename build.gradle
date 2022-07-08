@@ -12,10 +12,14 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation('org.springframework.boot:spring-boot-starter-web') {
+configurations {
+    all {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
+}
+
+dependencies {
+    implementation('org.springframework.boot:spring-boot-starter-web')
     // https://mvnrepository.com/artifact/com.datastax.cassandra/cassandra-driver-core
     implementation 'com.datastax.cassandra:cassandra-driver-core:3.11.2'
     implementation 'com.datastax.cassandra:cassandra-driver-mapping:3.11.2'
@@ -23,11 +27,27 @@ dependencies {
     implementation("com.google.guava:guava:31.1-jre")
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    //testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     testImplementation 'org.cassandraunit:cassandra-unit:4.3.1.0'
+    testImplementation 'org.mockito:mockito-core:4.6.1'
 }
 
 test {
     useJUnitPlatform()
+    testLogging {
+        // set options for log level LIFECYCLE
+        events "started", "skipped", "failed"
+        exceptionFormat "short"
+
+        // set options for log level DEBUG
+        debug {
+            events "started", "skipped", "failed"
+            exceptionFormat "full"
+        }
+
+        // remove standard output/error logging from --info builds
+        // by assigning only 'failed' and 'skipped' events
+        info.events = ["failed", "skipped"]
+    }
 }
