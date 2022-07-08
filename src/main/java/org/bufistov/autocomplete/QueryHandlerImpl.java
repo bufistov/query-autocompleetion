@@ -97,7 +97,7 @@ public class QueryHandlerImpl implements QueryHandler {
         while (finalSet.size() > topK) {
             finalSet.remove(finalSet.first());
         }
-        var currentMin = Optional.ofNullable(finalSet.first());
+        var currentMin = Optional.ofNullable(finalSet.isEmpty() ? null : finalSet.first());
         var currentSuffix = finalSet.stream()
                 .filter(x -> x.getSuffix().equals(suffix)).findFirst();
         boolean currentSuffixUpdated = currentSuffix.isPresent() && currentSuffix.get().getCount() < count;

@@ -61,17 +61,10 @@ public class QueryHandlerImplTest {
     public void setUp() {
         openMocks(this);
         when(storage.addQuery(queryCaptor.capture())).thenReturn(NEW_COUNTER_VALUE);
-        when(storage.getTopKQueries(anyString())).thenAnswer((args) -> {
-            String prefix = args.getArgument(0, String.class);
-            String suffix = QUERY.substring(prefix.length());
-            return PrefixTopK.builder()
-                    .topK(Set.of(CompletionCount.builder()
-                            .count(OLD_COUNTER_VALUE)
-                            .suffix(suffix)
-                    .build()))
+        when(storage.getTopKQueries(anyString())).thenReturn(PrefixTopK.builder()
+                    .topK(Set.of())
                     .version(VERSION)
-                    .build();
-        });
+                    .build());
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK, randomInterval,
