@@ -14,9 +14,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class SpringConfiguration {
+
+    @Value("${org.bufistov.autocomplete.max_thread_pool_size}")
+    private int maxThreadPoolSize;
 
     @Bean
     public QueryHandler queryHandler() {
@@ -40,5 +47,12 @@ public class SpringConfiguration {
     @Bean
     RandomInterval provideRandomInterval() {
         return new UniformRandomInterval(new Random(0));
+    }
+
+    @Bean("new1_Thread")
+    public ExecutorService suffixUpdateExecutorService() {
+        int cpuNum = Runtime.getRuntime().availableProcessors();
+        return new ThreadPoolExecutor(cpuNum, maxThreadPoolSize, 10, TimeUnit.SECONDS,
+                new SynchronousQueue<>(), new ThreadPoolExecutor.AbortPolicy());
     }
 }

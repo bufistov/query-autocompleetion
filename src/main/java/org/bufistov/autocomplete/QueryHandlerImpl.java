@@ -1,5 +1,9 @@
 package org.bufistov.autocomplete;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.bufistov.model.CompletionCount;
 import org.bufistov.model.TopKQueries;
@@ -7,10 +11,13 @@ import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.time.Clock;
-import java.util.*;
+import java.util.Optional;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 
 @Log4j2
+@AllArgsConstructor
+@NoArgsConstructor
 public class QueryHandlerImpl implements QueryHandler {
 
     @Autowired
@@ -25,6 +32,11 @@ public class QueryHandlerImpl implements QueryHandler {
     @Autowired
     private RandomInterval randomInterval;
 
+    @Autowired
+    private ExecutorService executorService;
+
+    private ListeningExecutorService listeningExecutorService;
+
     private enum UpdateStatus {
         NO_UPDATE_REQUIRED,
         CONDITION_FAILED,
@@ -36,7 +48,10 @@ public class QueryHandlerImpl implements QueryHandler {
         log.debug("Adding query: {}", query);
         long newValue = storage.addQuery(query);
         log.debug("New value: {}", newValue);
-        updateTopKSuffixes(query, newValue);
+
+        getListeningExecutorService().submit(() -> updateTopKSuffixes(query, newValue))
+                .addListener(() -> log.debug("Execution finished for query '{}'", query),
+                        MoreExecutors.directExecutor());
     }
 
     @Override
@@ -46,6 +61,7 @@ public class QueryHandlerImpl implements QueryHandler {
                 .queries(storage.getTopKQueries(prefix).getTopK())
                 .build();
     }
+
     private void updateTopKSuffixes(String query, Long count) {
         for (int prefixLength = query.length(); prefixLength > 0; --prefixLength) {
             String prefix = query.substring(0, prefixLength);
@@ -108,5 +124,12 @@ public class QueryHandlerImpl implements QueryHandler {
             return UpdateStatus.SUCCESS;
         }
         return UpdateStatus.NO_UPDATE_REQUIRED;
+    }
+
+    private synchronized ListeningExecutorService getListeningExecutorService() {
+        if (listeningExecutorService == null) {
+            listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
+        }
+        return listeningExecutorService;
     }
 }
