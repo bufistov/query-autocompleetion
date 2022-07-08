@@ -4,8 +4,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.bufistov.model.CompletionCount;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.storage.Storage;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -54,7 +54,10 @@ public class QueryHandlerImplTest {
     @Captor
     ArgumentCaptor<Long> versionCaptor;
 
-    @Before
+    @Captor
+    ArgumentCaptor<String> prefixCaptor;
+
+    @BeforeEach
     public void setUp() {
         openMocks(this);
         when(storage.addQuery(queryCaptor.capture())).thenReturn(NEW_COUNTER_VALUE);
@@ -76,7 +79,7 @@ public class QueryHandlerImplTest {
     }
 
     @Test
-    public void addQuery_oneQuery_success() {
+    public void addQuery_oneQuery_updateAll() {
         queryHandler.addQuery(QUERY);
         verify(storage, times(1)).addQuery(anyString());
         assertEquals(QUERY, queryCaptor.getValue());
@@ -90,10 +93,64 @@ public class QueryHandlerImplTest {
         assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY, "qu", "q")));
     }
 
+    @Test
+    public void addQuery_secondQuery_noUpdate() {
+        when(storage.getTopKQueries(eq(QUERY))).thenAnswer((args) -> {
+            return PrefixTopK.builder()
+                    .topK(getBigTopK())
+                    .version(VERSION)
+                    .build();
+        });
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        assertEquals(QUERY, queryCaptor.getValue());
+        verify(storage, times(1)).getTopKQueries(anyString());
+        verify(storage, never()).updateTopKQueries(anyString(), any(), anyLong());
+    }
+
+    @Test
+    public void addQuery_updateThisQuery() {
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer((args) -> {
+            String prefix = args.getArgument(0, String.class);
+            String suffix = QUERY.substring(prefix.length());
+            if (suffix.length() == 0) {
+                return PrefixTopK.builder()
+                        .topK(Set.of(getSuffixCount("1", 10),
+                                getSuffixCount("2", 11),
+                                getSuffixCount(suffix, 0)))
+                        .version(VERSION)
+                        .build();
+            } else {
+                return PrefixTopK.builder()
+                        .topK(getBigTopK())
+                        .version(VERSION)
+                        .build();
+            }
+        });
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        verify(storage, times(2)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY, "qu")));
+        verify(storage, times(1)).updateTopKQueries(anyString(), any(), anyLong());
+
+        assertThat(topKCaptor.getAllValues(), is(List.of(
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("", NEW_COUNTER_VALUE)))
+        ));
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY)));
+    }
+
     private CompletionCount getSuffixCount(String suffix, long count) {
         return CompletionCount.builder()
                 .count(count)
                 .suffix(suffix)
                 .build();
+    }
+
+    private Set<CompletionCount> getBigTopK() {
+        return Set.of(getSuffixCount("1", 10),
+                getSuffixCount("2", 11),
+                getSuffixCount("3", 12));
     }
 }
