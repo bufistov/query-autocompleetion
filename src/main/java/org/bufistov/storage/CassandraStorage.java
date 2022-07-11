@@ -1,6 +1,5 @@
 package org.bufistov.storage;
 
-import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import org.bufistov.exception.DependencyException;
@@ -42,7 +41,7 @@ public class CassandraStorage implements Storage {
     }
 
     @Override
-    public boolean updateTopKQueries(String prefix, Set<CompletionCount> newTopK, Long version) {
+    public boolean updateTopKQueries(String prefix, Set<SuffixCount> newTopK, Long version) {
         if (version == null) {
             return updateTopK.updateTopKIfVersionIsNull(prefix, newTopK).wasApplied();
         }

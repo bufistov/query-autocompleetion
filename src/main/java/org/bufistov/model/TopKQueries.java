@@ -12,5 +12,5 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TopKQueries {
-    private Set<CompletionCount> queries;
+    private Set<SuffixCount> queries;
 }

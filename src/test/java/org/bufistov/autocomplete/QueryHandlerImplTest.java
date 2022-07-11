@@ -1,7 +1,7 @@
 package org.bufistov.autocomplete;
 
 import com.google.common.util.concurrent.MoreExecutors;
-import org.bufistov.model.CompletionCount;
+import org.bufistov.model.SuffixCount;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +49,7 @@ public class QueryHandlerImplTest {
     ArgumentCaptor<String> updatePrefixCaptor;
 
     @Captor
-    ArgumentCaptor<Set<CompletionCount>> topKCaptor;
+    ArgumentCaptor<Set<SuffixCount>> topKCaptor;
 
     @Captor
     ArgumentCaptor<Long> versionCaptor;
@@ -134,14 +134,14 @@ public class QueryHandlerImplTest {
         assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY)));
     }
 
-    private CompletionCount getSuffixCount(String suffix, long count) {
-        return CompletionCount.builder()
+    private SuffixCount getSuffixCount(String suffix, long count) {
+        return SuffixCount.builder()
                 .count(count)
                 .suffix(suffix)
                 .build();
     }
 
-    private Set<CompletionCount> getBigTopK() {
+    private Set<SuffixCount> getBigTopK() {
         return Set.of(getSuffixCount("1", 10),
                 getSuffixCount("2", 11),
                 getSuffixCount("3", 12));

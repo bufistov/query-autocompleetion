@@ -1,10 +1,8 @@
 package org.bufistov.storage;
 
-import org.bufistov.model.CompletionCount;
+import org.bufistov.model.SuffixCount;
 import org.bufistov.model.PrefixTopK;
-import org.bufistov.model.TopKQueries;
 
-import java.util.List;
 import java.util.Set;
 
 public interface Storage {
@@ -19,5 +17,5 @@ public interface Storage {
      * @param version Version that ensures atomic read/modify/write operation
      * @return true if update was successfull, false if condition
      */
-    boolean updateTopKQueries(String prefix, Set<CompletionCount> newTopK, Long version);
+    boolean updateTopKQueries(String prefix, Set<SuffixCount> newTopK, Long version);
 }

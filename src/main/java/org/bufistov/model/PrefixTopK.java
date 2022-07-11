@@ -12,6 +12,6 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PrefixTopK {
-    private Set<CompletionCount> topK; // top K suffixes for given prefix
+    private Set<SuffixCount> topK; // top K suffixes for given prefix
     private Long version;
 }

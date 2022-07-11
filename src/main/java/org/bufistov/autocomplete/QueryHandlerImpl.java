@@ -5,7 +5,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.bufistov.model.CompletionCount;
+import org.bufistov.model.SuffixCount;
 import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +113,7 @@ public class QueryHandlerImpl implements QueryHandler {
             finalSet.remove(currentMin.get());
         }
         if (updated) {
-            finalSet.add(CompletionCount.builder()
+            finalSet.add(SuffixCount.builder()
                     .suffix(suffix)
                     .count(count)
                     .build());
