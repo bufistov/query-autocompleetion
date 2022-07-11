@@ -15,6 +15,9 @@ import org.mockito.stubbing.Answer;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -262,6 +265,20 @@ public class QueryHandlerImplTest {
                         getSuffixCount("que3", 12)
                         ))
                 .build()));
+    }
+
+    @Test
+    public void addQuery_interrupted_success() {
+        ExecutorService executorService = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS,
+                new SynchronousQueue<>(), new ThreadPoolExecutor.AbortPolicy());
+        when(randomInterval.getMillis()).thenReturn(100000L);
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
+                .thenReturn(false);
+        var queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
+                randomInterval,
+                executorService, null);
+        queryHandler.addQuery(QUERY);
+        executorService.shutdownNow();
     }
 
     private SuffixCount getSuffixCount(String suffix, long count) {
