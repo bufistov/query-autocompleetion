@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.stubbing.Answer;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,6 @@ public class QueryHandlerImplTest {
     private final static long TOPK = 3;
     private final static long MAX_RETRIES_TO_UPDATE_TOPK = 10;
 
-    private final static long OLD_COUNTER_VALUE = 1;
     private final static long NEW_COUNTER_VALUE = 2;
 
     private final static String QUERY = "que";
@@ -88,12 +88,10 @@ public class QueryHandlerImplTest {
 
     @Test
     public void addQuery_secondQuery_noUpdate() {
-        when(storage.getTopKQueries(eq(QUERY))).thenAnswer((args) -> {
-            return PrefixTopK.builder()
-                    .topK(getBigTopK())
-                    .version(VERSION)
-                    .build();
-        });
+        when(storage.getTopKQueries(eq(QUERY))).thenAnswer((args) -> PrefixTopK.builder()
+                .topK(getBigTopK())
+                .version(VERSION)
+                .build());
         queryHandler.addQuery(QUERY);
         verify(storage, times(1)).addQuery(anyString());
         assertEquals(QUERY, queryCaptor.getValue());
@@ -103,23 +101,10 @@ public class QueryHandlerImplTest {
 
     @Test
     public void addQuery_updateThisQuery() {
-        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer((args) -> {
-            String prefix = args.getArgument(0, String.class);
-            String suffix = QUERY.substring(prefix.length());
-            if (suffix.length() == 0) {
-                return PrefixTopK.builder()
-                        .topK(Set.of(getSuffixCount("1", 10),
-                                getSuffixCount("2", 11),
-                                getSuffixCount(suffix, 0)))
-                        .version(VERSION)
-                        .build();
-            } else {
-                return PrefixTopK.builder()
-                        .topK(getBigTopK())
-                        .version(VERSION)
-                        .build();
-            }
-        });
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("", 0))));
         queryHandler.addQuery(QUERY);
         verify(storage, times(1)).addQuery(anyString());
         verify(storage, times(2)).getTopKQueries(anyString());
@@ -145,5 +130,23 @@ public class QueryHandlerImplTest {
         return Set.of(getSuffixCount("1", 10),
                 getSuffixCount("2", 11),
                 getSuffixCount("3", 12));
+    }
+
+    private Answer<PrefixTopK> getAnswerForTheQuery(String query, Set<SuffixCount> answer) {
+        return (args) -> {
+            String prefix = args.getArgument(0, String.class);
+            String suffix = query.substring(prefix.length());
+            if (suffix.length() == 0) {
+                return PrefixTopK.builder()
+                        .topK(answer)
+                        .version(VERSION)
+                        .build();
+            } else {
+                return PrefixTopK.builder()
+                        .topK(getBigTopK())
+                        .version(VERSION)
+                        .build();
+            }
+        };
     }
 }
