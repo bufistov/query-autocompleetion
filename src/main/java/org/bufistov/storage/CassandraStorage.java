@@ -36,7 +36,8 @@ public class CassandraStorage implements Storage {
     @Override
     public PrefixTopK getTopKQueries(String prefix) {
         return Optional.ofNullable(topKMapper.get(prefix))
-                .map(item -> PrefixTopK.builder().topK(item.getTopK()).version(item.getVersion()).build())
+                .map(item -> PrefixTopK.builder().topK(item.getTopK())
+                        .version(item.getVersion()).build())
                 .orElse(PrefixTopK.builder().topK(Set.of()).build());
     }
 

@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 @Log4j2
 @AllArgsConstructor
@@ -58,7 +60,7 @@ public class QueryHandlerImpl implements QueryHandler {
     public TopKQueries getQueries(String prefix) {
         log.debug("Getting queries for prefix: {}", prefix);
         return TopKQueries.builder()
-                .queries(storage.getTopKQueries(prefix).getTopK())
+                .queries(addPrefix(storage.getTopKQueries(prefix).getTopK(), prefix))
                 .build();
     }
 
@@ -134,5 +136,13 @@ public class QueryHandlerImpl implements QueryHandler {
             listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
         }
         return listeningExecutorService;
+    }
+
+    private Set<SuffixCount> addPrefix(Set<SuffixCount> suffixCount, String prefix) {
+        return suffixCount.stream().map(sc -> SuffixCount.builder()
+                        .count(sc.getCount())
+                        .suffix(prefix + sc.getSuffix())
+                        .build()
+                ).collect(Collectors.toSet());
     }
 }

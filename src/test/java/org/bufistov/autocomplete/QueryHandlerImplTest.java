@@ -3,6 +3,7 @@ package org.bufistov.autocomplete;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
+import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,8 @@ public class QueryHandlerImplTest {
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         when(randomInterval.getMillis()).thenReturn(1L);
-        queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK, randomInterval,
+        queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
+                randomInterval,
                 executorService, null);
     }
 
@@ -230,6 +232,36 @@ public class QueryHandlerImplTest {
         verify(storage, times((int)MAX_RETRIES_TO_UPDATE_TOPK))
                 .updateTopKQueries(anyString(), any(), anyLong());
         assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY, QUERY, QUERY, QUERY)));
+    }
+
+    @Test
+    public void zeroAgrugmentContructed_success() {
+        new QueryHandlerImpl();
+    }
+
+    @Test
+    public void addQuery_repeatedQuery_updateAll() {
+        queryHandler.addQuery(QUERY);
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(2)).addQuery(anyString());
+        assertEquals(QUERY, queryCaptor.getValue());
+        verify(storage, times(QUERY.length() * 2)).getTopKQueries(anyString());
+    }
+
+    @Test
+    public void getQueries_success() {
+        when(storage.getTopKQueries(prefixCaptor.capture()))
+                .thenReturn(PrefixTopK.builder()
+                        .version(VERSION)
+                        .topK(getBigTopK())
+                        .build());
+        var result = queryHandler.getQueries(QUERY);
+        assertThat(result, is(TopKQueries.builder()
+                .queries(Set.of(getSuffixCount("que1", 10),
+                        getSuffixCount("que2", 11),
+                        getSuffixCount("que3", 12)
+                        ))
+                .build()));
     }
 
     private SuffixCount getSuffixCount(String suffix, long count) {
