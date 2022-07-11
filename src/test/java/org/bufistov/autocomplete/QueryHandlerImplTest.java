@@ -1,8 +1,8 @@
 package org.bufistov.autocomplete;
 
 import com.google.common.util.concurrent.MoreExecutors;
-import org.bufistov.model.SuffixCount;
 import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.SuffixCount;
 import org.bufistov.storage.Storage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ public class QueryHandlerImplTest {
     Storage storage;
 
     private final static long TOPK = 3;
-    private final static long MAX_RETRIES_TO_UPDATE_TOPK = 10;
+    private final static long MAX_RETRIES_TO_UPDATE_TOPK = 4;
 
     private final static long NEW_COUNTER_VALUE = 2;
 
@@ -67,6 +67,7 @@ public class QueryHandlerImplTest {
                     .build());
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
+        when(randomInterval.getMillis()).thenReturn(1L);
         queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK, randomInterval,
                 executorService, null);
     }
@@ -117,6 +118,118 @@ public class QueryHandlerImplTest {
                         getSuffixCount("", NEW_COUNTER_VALUE)))
         ));
         assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY)));
+    }
+
+    @Test
+    public void addQuery_updateThisQuery_newTopK() {
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("3", 0))));
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        verify(storage, times(2)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY, "qu")));
+        verify(storage, times(1)).updateTopKQueries(anyString(), any(), anyLong());
+
+        assertThat(topKCaptor.getAllValues(), is(List.of(
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("", NEW_COUNTER_VALUE)))
+        ));
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY)));
+    }
+
+    @Test
+    public void addQuery_updateThisQuery_addNewTopK() {
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                       getSuffixCount("2", 11))));
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        verify(storage, times(2)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY, "qu")));
+        verify(storage, times(1)).updateTopKQueries(anyString(), any(), anyLong());
+
+        assertThat(topKCaptor.getAllValues(), is(List.of(
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("", NEW_COUNTER_VALUE)))
+        ));
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY)));
+    }
+
+    @Test
+    public void addQuery_updateThisQuery_removeTopK() {
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("3", 12),
+                        getSuffixCount("4", 13)
+                        )));
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        verify(storage, times(2)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY, "qu")));
+        verify(storage, times(1)).updateTopKQueries(anyString(), any(), anyLong());
+
+        assertThat(topKCaptor.getAllValues(), is(List.of(
+                Set.of(getSuffixCount("4", 13),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("3", 12)))
+        ));
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY)));
+    }
+
+    @Test
+    public void addQuery_presentButNotUpdated() {
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("", NEW_COUNTER_VALUE + 2)
+                )));
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        verify(storage, times(1)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY)));
+        verify(storage, never()).updateTopKQueries(anyString(), any(), anyLong());
+    }
+
+    @Test
+    public void addQuery_conditionFailedOnce_success() {
+        ArgumentCaptor<String> updatePrefixCaptor = ArgumentCaptor.forClass(String.class);
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
+                .thenReturn(false)
+                .thenReturn(true)
+                .thenReturn(true);
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("", NEW_COUNTER_VALUE - 1)
+                )));
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(3)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY, QUERY, "qu")));
+        verify(storage, times(2)).updateTopKQueries(anyString(), any(), anyLong());
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY, QUERY)));
+    }
+
+    @Test
+    public void addQuery_conditionFailedAlways_success() {
+        ArgumentCaptor<String> updatePrefixCaptor = ArgumentCaptor.forClass(String.class);
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
+                .thenReturn(false);
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("2", 11),
+                        getSuffixCount("", NEW_COUNTER_VALUE - 1)
+                )));
+        queryHandler.addQuery(QUERY);
+        verify(storage, times((int)MAX_RETRIES_TO_UPDATE_TOPK + 1)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY, QUERY, QUERY, QUERY, "qu")));
+        verify(storage, times((int)MAX_RETRIES_TO_UPDATE_TOPK))
+                .updateTopKQueries(anyString(), any(), anyLong());
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY, QUERY, QUERY, QUERY)));
     }
 
     private SuffixCount getSuffixCount(String suffix, long count) {

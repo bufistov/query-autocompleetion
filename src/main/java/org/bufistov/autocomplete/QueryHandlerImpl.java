@@ -101,9 +101,10 @@ public class QueryHandlerImpl implements QueryHandler {
         var currentSuffix = finalSet.stream()
                 .filter(x -> x.getSuffix().equals(suffix)).findFirst();
         boolean currentSuffixUpdated = currentSuffix.isPresent() && currentSuffix.get().getCount() < count;
-        boolean updated = currentSuffixUpdated
+        boolean addCurrentSuffix = currentSuffixUpdated
                 || finalSet.size() < topK
                 || currentMin.get().getCount() < count;
+        boolean updated = addCurrentSuffix || topKSuffixes.getTopK().size() > topK;
 
         if (currentSuffixUpdated) {
             finalSet.remove(currentSuffix.get());
@@ -113,10 +114,12 @@ public class QueryHandlerImpl implements QueryHandler {
             finalSet.remove(currentMin.get());
         }
         if (updated) {
-            finalSet.add(SuffixCount.builder()
-                    .suffix(suffix)
-                    .count(count)
-                    .build());
+            if (addCurrentSuffix) {
+                finalSet.add(SuffixCount.builder()
+                        .suffix(suffix)
+                        .count(count)
+                        .build());
+            }
             boolean applied = storage.updateTopKQueries(prefix, finalSet, topKSuffixes.getVersion());
             if (!applied) {
                 return UpdateStatus.CONDITION_FAILED;
