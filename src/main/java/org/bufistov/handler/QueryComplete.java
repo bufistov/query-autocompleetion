@@ -1,6 +1,7 @@
 package org.bufistov.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import org.bufistov.autocomplete.QueryHandler;
 import org.bufistov.model.TopKQueries;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@AllArgsConstructor
 @RestController
 public class QueryComplete {
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Autowired
     private QueryHandler queryHandler;
