@@ -201,6 +201,32 @@ public class QueryHandlerImplTest {
     }
 
     @Test
+    public void addQuery_presentButNotUpdated_lessThanK_noUpdate() {
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", 10),
+                        getSuffixCount("", NEW_COUNTER_VALUE + 2)
+                )));
+        queryHandler.addQuery(QUERY);
+        verify(storage, never()).updateTopKQueries(anyString(), any(), anyLong());
+        verify(storage, times(1)).addQuery(anyString());
+        verify(storage, times(1)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY)));
+    }
+
+    @Test
+    public void addQuery_presentButNotUpdated_isCurrentMin_noUpdate() {
+        when(storage.getTopKQueries(prefixCaptor.capture())).thenAnswer(getAnswerForTheQuery(QUERY,
+                Set.of(getSuffixCount("1", NEW_COUNTER_VALUE - 1),
+                        getSuffixCount("", NEW_COUNTER_VALUE + 1)
+                )));
+        queryHandler.addQuery(QUERY);
+        verify(storage, never()).updateTopKQueries(anyString(), any(), anyLong());
+        verify(storage, times(1)).addQuery(anyString());
+        verify(storage, times(1)).getTopKQueries(anyString());
+        assertThat(prefixCaptor.getAllValues(), is(List.of(QUERY)));
+    }
+
+    @Test
     public void addQuery_conditionFailedOnce_success() {
         ArgumentCaptor<String> updatePrefixCaptor = ArgumentCaptor.forClass(String.class);
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))

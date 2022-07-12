@@ -26,7 +26,7 @@ dependencies {
     implementation 'com.datastax.cassandra:cassandra-driver-core:3.11.2'
     implementation 'com.datastax.cassandra:cassandra-driver-mapping:3.11.2'
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
-    implementation("com.google.guava:guava:31.1-jre")
+    implementation 'com.google.guava:guava:31.1-jre'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
@@ -77,6 +77,10 @@ testing {
                 implementation 'com.datastax.cassandra:cassandra-driver-mapping:3.11.2'
                 implementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
                 runtimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+                implementation 'org.testcontainers:junit-jupiter:1.17.3'
+                implementation 'org.testcontainers:cassandra:1.17.3'
+                implementation 'org.hamcrest:hamcrest:2.2'
+                implementation 'org.awaitility:awaitility:4.2.0'
             }
         }
     }

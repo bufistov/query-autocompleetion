@@ -25,6 +25,9 @@ public class SpringConfiguration {
     @Value("${org.bufistov.autocomplete.max_thread_pool_size}")
     private int maxThreadPoolSize;
 
+    @Value("${org.bufistov.autocomplete.max_retry_delay_millis}")
+    private int maxRetryDelayMillis;
+
     @Bean
     public QueryHandler queryHandler() {
         return new QueryHandlerImpl();
@@ -45,11 +48,11 @@ public class SpringConfiguration {
     }
 
     @Bean
-    RandomInterval provideRandomInterval() {
-        return new UniformRandomInterval(new Random(0));
+    public RandomInterval provideRandomInterval() {
+        return new UniformRandomInterval(new Random(0), maxRetryDelayMillis);
     }
 
-    @Bean("new1_Thread")
+    @Bean
     public ExecutorService suffixUpdateExecutorService() {
         int cpuNum = Runtime.getRuntime().availableProcessors();
         return new ThreadPoolExecutor(cpuNum, maxThreadPoolSize, 10, TimeUnit.SECONDS,

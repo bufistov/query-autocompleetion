@@ -1,11 +1,12 @@
 package org.bufistov.autocomplete;
 
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Random;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class UniformRandomInterval implements RandomInterval {
     private final Random random;
 

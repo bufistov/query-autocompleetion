@@ -51,9 +51,9 @@ public class QueryHandlerImpl implements QueryHandler {
         long newValue = storage.addQuery(query);
         log.debug("New value: {}", newValue);
 
-        getListeningExecutorService().submit(() -> updateTopKSuffixes(query, newValue))
-                .addListener(() -> log.debug("Execution finished for query '{}'", query),
-                        MoreExecutors.directExecutor());
+        var future = getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(query, newValue));
+        future.addListener(() -> log.debug("Execution finished for query '{}'", query),
+                MoreExecutors.directExecutor());
     }
 
     @Override
@@ -64,12 +64,21 @@ public class QueryHandlerImpl implements QueryHandler {
                 .build();
     }
 
+    private void updateTopKSuffixesAndLogErrors(String query, Long count) {
+        try {
+            updateTopKSuffixes(query, count);
+        } catch (Throwable throwable) {
+            log.error("Error: ", throwable);
+        }
+    }
     private void updateTopKSuffixes(String query, Long count) {
         for (int prefixLength = query.length(); prefixLength > 0; --prefixLength) {
             String prefix = query.substring(0, prefixLength);
             int retry = 0;
+            log.debug("Updating prefix {} query {}", prefix, query);
             for (; retry < maxRetriesToUpdateTopK; ++retry) {
-                var status = tryUpdateTopKSuffixes(query, count, prefix);
+                UpdateStatus status = tryUpdateTopKSuffixes(query, count, prefix);
+                log.info("status: {}", status);
                 if (status == UpdateStatus.CONDITION_FAILED) {
                     long sleepInterval = randomInterval.getMillis();
                     log.info("Race updating prefix {} retry number {} after {} millis", prefix, retry + 1, sleepInterval);
@@ -81,8 +90,10 @@ public class QueryHandlerImpl implements QueryHandler {
                         throw new RuntimeException(exception);
                     }
                 } else if (status == UpdateStatus.NO_UPDATE_REQUIRED) {
+                    log.debug("No update required for prefix {} query {}", prefix, query);
                     return;
                 } else {
+                    log.debug("updating prefix {} query {} finished, status: {}", prefix, query, status);
                     break;
                 }
             }
@@ -95,6 +106,7 @@ public class QueryHandlerImpl implements QueryHandler {
     private UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix) {
         String suffix = query.substring(prefix.length());
         var topKSuffixes = storage.getTopKQueries(prefix);
+        log.debug("Prefix: {}. Current topK suffixes: {}", prefix, topKSuffixes.toString());
         var finalSet = new TreeSet<>(topKSuffixes.getTopK());
         while (finalSet.size() > topK) {
             finalSet.remove(finalSet.first());
@@ -104,8 +116,8 @@ public class QueryHandlerImpl implements QueryHandler {
                 .filter(x -> x.getSuffix().equals(suffix)).findFirst();
         boolean currentSuffixUpdated = currentSuffix.isPresent() && currentSuffix.get().getCount() < count;
         boolean addCurrentSuffix = currentSuffixUpdated
-                || finalSet.size() < topK
-                || currentMin.get().getCount() < count;
+                || (currentSuffix.isEmpty() && finalSet.size() < topK)
+                || (currentSuffix.isEmpty() && currentMin.get().getCount() < count);
         boolean updated = addCurrentSuffix || topKSuffixes.getTopK().size() > topK;
 
         if (currentSuffixUpdated) {
@@ -121,11 +133,15 @@ public class QueryHandlerImpl implements QueryHandler {
                         .suffix(suffix)
                         .count(count)
                         .build());
+                log.info("{} Updating prefix hash with: {} {} version: {}", prefix, suffix, count,
+                        topKSuffixes.getVersion());
             }
             boolean applied = storage.updateTopKQueries(prefix, finalSet, topKSuffixes.getVersion());
             if (!applied) {
+                log.warn("Conditional update failed");
                 return UpdateStatus.CONDITION_FAILED;
             }
+            log.info("Update completed successfully, {} new version should be {} + 1", prefix, topKSuffixes.getVersion());
             return UpdateStatus.SUCCESS;
         }
         return UpdateStatus.NO_UPDATE_REQUIRED;
