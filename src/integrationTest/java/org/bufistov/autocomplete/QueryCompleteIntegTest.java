@@ -25,6 +25,10 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+/**
+ * It seems there is no an easy way to inject random exposed port into spring configuration.
+ * So, to test cassandra integration we build spring web handler manually.
+ */
 @Log4j2
 @Testcontainers
 public class QueryCompleteIntegTest {
@@ -33,15 +37,16 @@ public class QueryCompleteIntegTest {
     final static Long MAX_RETRIES_TO_UPDATE_TOPK = 10L;
     final static Integer MAX_SLEEP_DELAY_MILLIS = 3000;
 
+    final static int MAX_THREAD_POOL_SIZE = 1000;
+
+    static final int NUM_QUERIES = 100;
+
     SpringConfiguration springConfiguration = new SpringConfiguration();
     QueryComplete queryComplete;
 
     String queryPrefix;
 
     Random random = new Random();
-    private int maxThreadPoolSize = 1000;
-
-    private static final int NUM_QUERIES = 100;
 
     private static final CassandraContainer cassandra = new CassandraContainer("cassandra:latest")
             .withInitScript("create_tables.cqlsh")
@@ -73,7 +78,7 @@ public class QueryCompleteIntegTest {
 
     public ExecutorService suffixUpdateExecutorService() {
         int cpuNum = Runtime.getRuntime().availableProcessors();
-        return new ThreadPoolExecutor(cpuNum, maxThreadPoolSize, 10, TimeUnit.SECONDS,
+        return new ThreadPoolExecutor(cpuNum, MAX_THREAD_POOL_SIZE, 10, TimeUnit.SECONDS,
                 new SynchronousQueue<>(), new ThreadPoolExecutor.AbortPolicy());
     }
 

@@ -51,9 +51,9 @@ public class QueryHandlerImpl implements QueryHandler {
         long newValue = storage.addQuery(query);
         log.debug("New value: {}", newValue);
 
-        var future = getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(query, newValue));
-        future.addListener(() -> log.debug("Execution finished for query '{}'", query),
-                MoreExecutors.directExecutor());
+        getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(query, newValue))
+                .addListener(() -> log.debug("Execution finished for query '{}'", query),
+                        MoreExecutors.directExecutor());
     }
 
     @Override
@@ -75,13 +75,11 @@ public class QueryHandlerImpl implements QueryHandler {
         for (int prefixLength = query.length(); prefixLength > 0; --prefixLength) {
             String prefix = query.substring(0, prefixLength);
             int retry = 0;
-            log.debug("Updating prefix {} query {}", prefix, query);
             for (; retry < maxRetriesToUpdateTopK; ++retry) {
                 UpdateStatus status = tryUpdateTopKSuffixes(query, count, prefix);
-                log.info("status: {}", status);
                 if (status == UpdateStatus.CONDITION_FAILED) {
                     long sleepInterval = randomInterval.getMillis();
-                    log.info("Race updating prefix {} retry number {} after {} millis", prefix, retry + 1, sleepInterval);
+                    log.debug("Race updating prefix {} retry number {} after {} millis", prefix, retry + 1, sleepInterval);
                     try {
                         Thread.sleep(sleepInterval);
                     } catch (InterruptedException exception) {
@@ -93,7 +91,6 @@ public class QueryHandlerImpl implements QueryHandler {
                     log.debug("No update required for prefix {} query {}", prefix, query);
                     return;
                 } else {
-                    log.debug("updating prefix {} query {} finished, status: {}", prefix, query, status);
                     break;
                 }
             }
@@ -106,7 +103,6 @@ public class QueryHandlerImpl implements QueryHandler {
     private UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix) {
         String suffix = query.substring(prefix.length());
         var topKSuffixes = storage.getTopKQueries(prefix);
-        log.debug("Prefix: {}. Current topK suffixes: {}", prefix, topKSuffixes.toString());
         var finalSet = new TreeSet<>(topKSuffixes.getTopK());
         while (finalSet.size() > topK) {
             finalSet.remove(finalSet.first());
@@ -133,15 +129,11 @@ public class QueryHandlerImpl implements QueryHandler {
                         .suffix(suffix)
                         .count(count)
                         .build());
-                log.info("{} Updating prefix hash with: {} {} version: {}", prefix, suffix, count,
-                        topKSuffixes.getVersion());
             }
             boolean applied = storage.updateTopKQueries(prefix, finalSet, topKSuffixes.getVersion());
             if (!applied) {
-                log.warn("Conditional update failed");
                 return UpdateStatus.CONDITION_FAILED;
             }
-            log.info("Update completed successfully, {} new version should be {} + 1", prefix, topKSuffixes.getVersion());
             return UpdateStatus.SUCCESS;
         }
         return UpdateStatus.NO_UPDATE_REQUIRED;

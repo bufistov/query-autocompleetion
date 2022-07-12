@@ -1,14 +1,14 @@
 <Configuration name="ConfigTest" status="ERROR" monitorInterval="5">
     <Appenders>
         <Console name="Out">
-            <PatternLayout pattern="%d [%t] %C{1}:%L - %m%n"/>
+            <PatternLayout pattern="%d [%t] %p %C{1}:%L - %m%n"/>
         </Console>
     </Appenders>
     <Loggers>
         <Root level="info">
             <AppenderRef ref="Out"/>
         </Root>
-        <Logger name="org.bufistov" level="debug" additivity="false">
+        <Logger name="org.bufistov" level="info" additivity="false">
             <AppenderRef ref="Out"/>
         </Logger>
         <Logger name="com.datastax.driver.core.QueryLogger.NORMAL" level="info" additivity="false">
