@@ -5,6 +5,7 @@ plugins {
     id 'java'
     id 'jacoco'
     id 'org.barfuin.gradle.jacocolog' version '2.0.0'
+    id 'application'
 }
 
 group 'org.bufistov'
@@ -84,4 +85,8 @@ testing {
             }
         }
     }
+}
+
+application {
+    mainClass = 'org.bufistov.QueryPopulator'
 }

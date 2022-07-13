@@ -1,18 +1,34 @@
 <Configuration name="ConfigTest" status="ERROR" monitorInterval="5">
+    <Properties>
+        <Property name="appenderPatternLayout">%d [%t] %p %C{2}:%L - %m%n</Property>
+    </Properties>
     <Appenders>
-        <Console name="Out">
-            <PatternLayout pattern="%d [%t] %p %C{1}:%L - %m%n"/>
+        <Console name="console">
+            <PatternLayout pattern="${appenderPatternLayout}"/>
         </Console>
+        <RollingFile name="rollingFileAppender" fileName="logs/application.log"
+                     filePattern="logs/application-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout>
+                <pattern>${appenderPatternLayout}</pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB" />
+            </Policies>
+            <DefaultRolloverStrategy fileIndex="max" />
+        </RollingFile>
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Out"/>
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="rollingFileAppender"/>
         </Root>
         <Logger name="org.bufistov" level="info" additivity="false">
-            <AppenderRef ref="Out"/>
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="rollingFileAppender"/>
         </Logger>
         <Logger name="com.datastax.driver.core.QueryLogger.NORMAL" level="info" additivity="false">
-            <AppenderRef ref="Out"/>
+            <AppenderRef ref="console"/>
         </Logger>
     </Loggers>
 </Configuration>
