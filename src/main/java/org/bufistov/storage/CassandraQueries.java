@@ -1,9 +1,10 @@
-package org.bufistov.model;
+package org.bufistov.storage;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Param;
 import com.datastax.driver.mapping.annotations.Query;
+import org.bufistov.model.SuffixCount;
 
 import java.util.Set;
 
