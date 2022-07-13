@@ -13,22 +13,20 @@ public class CassandraStorage implements Storage {
 
     private final Mapper<PrefixTopKCassandra> topKMapper;
 
-    private final UpdateCounter updateCounter;
-    private final UpdateTopK updateTopK;
+    private final CassandraQueries cassandraQueries;
 
     public CassandraStorage(MappingManager manager) {
         this.queryCounterMapper = manager.mapper(QueryCounter.class);
         this.topKMapper = manager.mapper(PrefixTopKCassandra.class);
-        this.updateCounter = manager.createAccessor(UpdateCounter.class);
-        this.updateTopK = manager.createAccessor(UpdateTopK.class);
+        this.cassandraQueries = manager.createAccessor(CassandraQueries.class);
     }
 
     @Override
     public Long addQuery(String query) {
-        updateCounter.incrementCounter(1, query);
+        cassandraQueries.incrementCounter(1, query);
         QueryCounter result = queryCounterMapper.get(query);
         if (result == null) {
-            throw new DependencyException("Cannot find query " + query.toString(), null);
+            throw new DependencyException("Cannot find query " + query, null);
         }
         return result.getCount();
     }
@@ -43,9 +41,7 @@ public class CassandraStorage implements Storage {
 
     @Override
     public boolean updateTopKQueries(String prefix, Set<SuffixCount> newTopK, Long version) {
-        if (version == null) {
-            return updateTopK.updateTopKIfVersionIsNull(prefix, newTopK).wasApplied();
-        }
-        return updateTopK.updateTopK(prefix, newTopK, version, version + 1).wasApplied();
+        long newVersion = version == null ? 1 : version + 1;
+        return cassandraQueries.updateTopK(prefix, newTopK, version, newVersion).wasApplied();
     }
 }
