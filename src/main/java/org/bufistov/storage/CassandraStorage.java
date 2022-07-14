@@ -57,9 +57,8 @@ public class CassandraStorage implements Storage {
 
     @Override
     public boolean removeSuffixes(String prefix, Set<String> suffixes, Long version) {
-        /*return cassandraQueries.removeSuffixes(prefix, suffixes, version, getNewVersion(version))
-                .wasApplied();*/
-        return false;
+        return cassandraQueries.removeSuffixes(prefix, suffixes, version, getNewVersion(version))
+                .wasApplied();
     }
 
     private Long getNewVersion(Long version) {

@@ -13,6 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -53,21 +54,17 @@ public class CassandraQueriesTest {
     void test_addNewEntryQuery_success() {
         String prefix = getRandomPrefix();
         assertThat(cassandraStorage.addSuffixes(prefix, Map.of(TEST_KEY, TEST_VALUE), null), is(true));
-        await().pollInterval(1, TimeUnit.SECONDS)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                                        .topK1(Map.of(TEST_KEY, TEST_VALUE))
-                                        .version(TEST_NEW_VERSION)
-                                        .build()));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK1(Map.of(TEST_KEY, TEST_VALUE))
+                .version(TEST_NEW_VERSION)
+                .build()));
 
         Long newValue = 23L;
         assertThat(cassandraStorage.addSuffixes(prefix, Map.of(TEST_KEY, newValue), TEST_NEW_VERSION), is(true));
-        await().pollInterval(1, TimeUnit.SECONDS)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                        .topK1(Map.of(TEST_KEY, newValue))
-                        .version(TEST_NEW_VERSION + 1)
-                        .build()));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK1(Map.of(TEST_KEY, newValue))
+                .version(TEST_NEW_VERSION + 1)
+                .build()));
     }
 
     @Test
@@ -82,6 +79,55 @@ public class CassandraQueriesTest {
                         .topK1(newValues)
                         .version(TEST_NEW_VERSION)
                         .build()));
+    }
+
+    @Test
+    void test_removeExistingItem_success() {
+        String prefix = getRandomPrefix();
+        String key2 = "key2";
+        var newValues = Map.of(TEST_KEY, TEST_VALUE, key2, TEST_VALUE);
+        assertThat(cassandraStorage.addSuffixes(prefix, newValues, null), is(true));
+        await().pollInterval(1, TimeUnit.SECONDS)
+                .atMost(20, TimeUnit.SECONDS)
+                .until(() -> cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                        .topK1(newValues)
+                        .version(TEST_NEW_VERSION)
+                        .build()));
+
+        assertThat(cassandraStorage.removeSuffixes(prefix, Set.of(key2), TEST_NEW_VERSION), is(true));
+        await().pollInterval(1, TimeUnit.SECONDS)
+                .atMost(20, TimeUnit.SECONDS)
+                .until(() -> cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                        .topK1(Map.of(TEST_KEY, TEST_VALUE))
+                        .version(TEST_NEW_VERSION + 1)
+                        .build()));
+    }
+
+    @Test
+    void test_removeNonExistingItem_success() {
+        String prefix = getRandomPrefix();
+        String key2 = "key2";
+        var newValues = Map.of(TEST_KEY, TEST_VALUE, key2, TEST_VALUE);
+        assertThat(cassandraStorage.addSuffixes(prefix, newValues, null), is(true));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK1(newValues)
+                .version(TEST_NEW_VERSION)
+                .build()));
+
+        assertThat(cassandraStorage.removeSuffixes(prefix, Set.of("nonExistingKey"), TEST_NEW_VERSION), is(true));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK1(newValues)
+                .version(TEST_NEW_VERSION + 1)
+                .build()));
+    }
+
+    @Test
+    void test_removeEmptySet_success() {
+        assertThat(cassandraStorage.removeSuffixes("prefix", Set.of(), TEST_NEW_VERSION), is(false));
+        assertThat(cassandraStorage.getTopKQueries("prefix"), is(PrefixTopK.builder()
+                .topK(Set.of())
+                .topK1(Map.of())
+                .build()));
     }
 
     private String getRandomPrefix() {
