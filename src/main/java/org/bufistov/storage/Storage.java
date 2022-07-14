@@ -3,7 +3,6 @@ package org.bufistov.storage;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,4 +37,24 @@ public interface Storage {
      * @return Return true if conditional update succeeded, false otherwise
      */
     boolean removeSuffixes(String prefix, Set<String> suffixes, Long version);
+
+    /**
+     * Update topK suffixes for given prefix.
+     * @param prefix Prefix to update
+     * @param toRemove entries to remove from topK
+     * @param toAdd entries to add into topK
+     * @param version version for atomic update
+     * @return true if update was applied false otherwise
+     */
+    boolean updateTopK1Queries(String prefix, Set<String> toRemove, Map<String, Long> toAdd, Long version);
+
+    /**
+     * Replace value for one suffix in topK map.
+     * @param prefix Query prefix to update
+     * @param suffix Query suffix to update
+     * @param newValue New value of counter
+     * @param version version for atomic read-modify-write
+     * @return true if update was applied false otherwise. False means that item was modified in the middle of update.
+     */
+    boolean replaceSuffixCounter(String prefix, String suffix, Long newValue, Long version);
 }

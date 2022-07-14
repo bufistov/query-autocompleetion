@@ -5,7 +5,6 @@ import com.datastax.driver.mapping.MappingManager;
 import org.bufistov.exception.DependencyException;
 import org.bufistov.model.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -58,6 +57,17 @@ public class CassandraStorage implements Storage {
     @Override
     public boolean removeSuffixes(String prefix, Set<String> suffixes, Long version) {
         return cassandraQueries.removeSuffixes(prefix, suffixes, version, getNewVersion(version))
+                .wasApplied();
+    }
+
+    @Override
+    public boolean updateTopK1Queries(String prefix, Set<String> toRemove, Map<String, Long> toAdd, Long version) {
+         return cassandraQueries.updateTopK1(prefix, toRemove, toAdd, version, getNewVersion(version)).wasApplied();
+    }
+
+    @Override
+    public boolean replaceSuffixCounter(String prefix, String suffix, Long newValue, Long version) {
+        return cassandraQueries.replaceSuffixCounter(prefix, suffix, newValue, version, getNewVersion(version))
                 .wasApplied();
     }
 
