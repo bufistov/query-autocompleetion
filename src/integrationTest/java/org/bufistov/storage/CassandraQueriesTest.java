@@ -123,10 +123,9 @@ public class CassandraQueriesTest {
 
     @Test
     void test_removeEmptySet_success() {
-        assertThat(cassandraStorage.removeSuffixes("prefix", Set.of(), TEST_NEW_VERSION), is(false));
+        assertThat(cassandraStorage.removeSuffixes("prefix", Set.of(), null), is(true));
         assertThat(cassandraStorage.getTopKQueries("prefix"), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of())
+                .version(TEST_NEW_VERSION)
                 .build()));
     }
 
