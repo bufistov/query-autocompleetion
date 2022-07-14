@@ -13,10 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -85,12 +86,10 @@ public class CassandraQueriesTest {
         String key2 = "key2";
         var newValues = Map.of(TEST_KEY, TEST_VALUE, key2, TEST_VALUE);
         assertThat(cassandraStorage.addSuffixes(prefix, newValues, null), is(true));
-        await().pollInterval(1, TimeUnit.SECONDS)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                        .topK1(newValues)
-                        .version(TEST_NEW_VERSION)
-                        .build()));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK1(newValues)
+                .version(TEST_NEW_VERSION)
+                .build()));
     }
 
     @Test
@@ -98,20 +97,16 @@ public class CassandraQueriesTest {
         String key2 = "key2";
         var newValues = Map.of(TEST_KEY, TEST_VALUE, key2, TEST_VALUE);
         assertThat(cassandraStorage.addSuffixes(prefix, newValues, null), is(true));
-        await().pollInterval(1, TimeUnit.SECONDS)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                        .topK1(newValues)
-                        .version(TEST_NEW_VERSION)
-                        .build()));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK1(newValues)
+                .version(TEST_NEW_VERSION)
+                .build()));
 
         assertThat(cassandraStorage.removeSuffixes(prefix, Set.of(key2), TEST_NEW_VERSION), is(true));
-        await().pollInterval(1, TimeUnit.SECONDS)
-                .atMost(20, TimeUnit.SECONDS)
-                .until(() -> cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                        .topK1(Map.of(TEST_KEY, TEST_VALUE))
-                        .version(TEST_NEW_VERSION + 1)
-                        .build()));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK1(Map.of(TEST_KEY, TEST_VALUE))
+                .version(TEST_NEW_VERSION + 1)
+                .build()));
     }
 
     @Test
