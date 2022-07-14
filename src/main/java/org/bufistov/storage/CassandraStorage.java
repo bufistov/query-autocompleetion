@@ -51,12 +51,12 @@ public class CassandraStorage implements Storage {
 
     @Override
     public boolean addSuffixes(String prefix, Map<String, Long> suffixes, Long version) {
-        return cassandraQueries.addNewSuffix(prefix, suffixes, version, getNewVersion(version)).wasApplied();
+        return cassandraQueries.updateTopK1(prefix, Set.of(), suffixes, version, getNewVersion(version)).wasApplied();
     }
 
     @Override
     public boolean removeSuffixes(String prefix, Set<String> suffixes, Long version) {
-        return cassandraQueries.removeSuffixes(prefix, suffixes, version, getNewVersion(version))
+        return cassandraQueries.updateTopK1(prefix, suffixes, Map.of(), version, getNewVersion(version))
                 .wasApplied();
     }
 
