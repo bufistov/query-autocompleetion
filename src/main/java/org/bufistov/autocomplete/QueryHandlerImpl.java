@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class QueryHandlerImpl implements QueryHandler {
 
     @Autowired
-    private Storage storage;
+    protected Storage storage;
 
     @Value("${org.bufistov.autocomplete.K}")
     private Long topK;
@@ -39,7 +39,7 @@ public class QueryHandlerImpl implements QueryHandler {
 
     private ListeningExecutorService listeningExecutorService;
 
-    private enum UpdateStatus {
+    protected enum UpdateStatus {
         NO_UPDATE_REQUIRED,
         CONDITION_FAILED,
         SUCCESS
@@ -76,7 +76,7 @@ public class QueryHandlerImpl implements QueryHandler {
             String prefix = query.substring(0, prefixLength);
             int retry = 0;
             for (; retry < maxRetriesToUpdateTopK; ++retry) {
-                UpdateStatus status = tryUpdateTopKSuffixes(query, count, prefix);
+                UpdateStatus status = tryUpdateTopKSuffixes(query, count, prefix, topK);
                 if (status == UpdateStatus.CONDITION_FAILED) {
                     long sleepInterval = randomInterval.getMillis();
                     log.debug("Race updating prefix {} retry number {} after {} millis", prefix, retry + 1, sleepInterval);
@@ -100,7 +100,7 @@ public class QueryHandlerImpl implements QueryHandler {
         }
     }
 
-    private UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix) {
+    protected UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix, Long topK) {
         String suffix = query.substring(prefix.length());
         var topKSuffixes = storage.getTopKQueries(prefix);
         var finalSet = new TreeSet<>(topKSuffixes.getTopK());

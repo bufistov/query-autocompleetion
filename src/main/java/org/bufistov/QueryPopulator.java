@@ -69,6 +69,8 @@ public class QueryPopulator {
                 .map(Map.Entry::getValue)
                 .reduce(0L, Long::sum);
         log.info("Queries with prefix '{}' {}", prefixToCount, withGivenPrefix);
+        log.info("Max query length: {}", queries.stream().map(String::length).max(Integer::compareTo).get());
+        log.info("Average query length: {}", queries.stream().map(String::length).reduce(0, Integer::sum) / queries.size());
         long start = System.currentTimeMillis();
         var latencies = queries.parallelStream()
                 .map(QueryPopulator::addQuery)

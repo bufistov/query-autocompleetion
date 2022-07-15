@@ -3,10 +3,7 @@ package org.bufistov;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.MappingManager;
-import org.bufistov.autocomplete.QueryHandler;
-import org.bufistov.autocomplete.QueryHandlerImpl;
-import org.bufistov.autocomplete.RandomInterval;
-import org.bufistov.autocomplete.UniformRandomInterval;
+import org.bufistov.autocomplete.*;
 import org.bufistov.storage.CassandraStorage;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +27,7 @@ public class SpringConfiguration {
 
     @Bean
     public QueryHandler queryHandler() {
-        return new QueryHandlerImpl();
+        return new QueryHandlerImpl1();
     }
 
     @Bean

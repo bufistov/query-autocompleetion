@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
 import java.util.Set;
 
 @Data
@@ -13,4 +14,5 @@ import java.util.Set;
 @AllArgsConstructor
 public class TopKQueries {
     private Set<SuffixCount> queries;
+    private Map<String, Long> queries1;
 }
