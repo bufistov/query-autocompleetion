@@ -5,7 +5,6 @@ plugins {
     id 'java'
     id 'jacoco'
     id 'org.barfuin.gradle.jacocolog' version '2.0.0'
-    id 'application'
 }
 
 group 'org.bufistov'
@@ -88,6 +87,7 @@ testing {
     }
 }
 
-application {
+task(runPopulator, dependsOn: 'classes', type: JavaExec) {
     mainClass = 'org.bufistov.QueryPopulator'
+    classpath = sourceSets.main.runtimeClasspath
 }

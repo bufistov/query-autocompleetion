@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 
 @Log4j2
 public class QueryPopulator {
-    static final String DEFAULT_QUERY_FILE = "aol_2006_35M_queries.txt";
+    static final String DEFAULT_QUERY_FILE = "aol_2006_100K_queries.txt";
     static final int DEFAULT_NUM_THREADS = 16;
 
     static final String DEFAULT_PREFIX_TO_COUNT = "www";
