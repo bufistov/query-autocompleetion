@@ -5,8 +5,15 @@ CREATE KEYSPACE IF NOT EXISTS autocompletedemo
   };
 
 CREATE TABLE IF NOT EXISTS autocompletedemo.query_count (
-  query text, count counter,
+  query text,
+  count counter,
+  sincelasttopkupdate counter,
   PRIMARY KEY (query));
+
+CREATE TABLE IF NOT EXISTS autocompletedemo.query_update (
+    query text,
+    topkUpdate timestamp,
+    PRIMARY KEY (query));
 
 CREATE TYPE IF NOT EXISTS autocompletedemo.SuffixCount(
   suffix text,
@@ -17,6 +24,7 @@ CREATE TABLE IF NOT EXISTS autocompletedemo.prefix_topk (
   prefix text,
   topK set<frozen<SuffixCount>>,
   topK1 map<text, bigint>,
+  topK2 set<tuple<bigint,text>>,
   version bigint,
   PRIMARY KEY (prefix)
 );

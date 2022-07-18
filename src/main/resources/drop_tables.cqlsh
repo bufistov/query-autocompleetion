@@ -1,2 +1,3 @@
-DROP TABLE autocompletedemo.query_count;
-DROP TABLE autocompletedemo.prefix_topk;
+DROP TABLE IF EXISTS autocompletedemo.query_count;
+DROP TABLE IF EXISTS autocompletedemo.prefix_topk;
+DROP TABLE IF EXISTS autocompletedemo.query_update;
