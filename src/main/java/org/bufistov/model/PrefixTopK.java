@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +16,6 @@ import java.util.Set;
 public class PrefixTopK {
     private Set<SuffixCount> topK; // top K suffixes for given prefix
     private Map<String, Long> topK1;
-    private Set<SuffixCount> topK2;
+    private List<SuffixCount> topK2;
     private Long version;
 }

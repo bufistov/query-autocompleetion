@@ -12,10 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -218,7 +215,7 @@ public class CassandraQueriesTest {
     void test_updateTopK2_success() {
         assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(), TEST_SUFFIXES2, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK2(Set.of(getSuffix(TEST_VALUE, TEST_KEY), getSuffix(TEST_VALUE2, TEST_KEY2)))
+                .topK2(List.of(getSuffix(TEST_VALUE, TEST_KEY), getSuffix(TEST_VALUE2, TEST_KEY2)))
                 .version(TEST_NEW_VERSION)
                 .build()));
 
@@ -226,10 +223,9 @@ public class CassandraQueriesTest {
         Long newValue = 123L;
         assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(),
                 Set.of(TUPLE_TYPE.newValue(newValue, newSuffix)), TEST_NEW_VERSION), is(true));
-        HashMap<String, Long> expectedMap = new HashMap<>(TEST_SUFFIXES);
-        expectedMap.put(newSuffix, newValue);
+
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK2(Set.of(getSuffix(TEST_VALUE, TEST_KEY),
+                .topK2(List.of(getSuffix(TEST_VALUE, TEST_KEY),
                         getSuffix(TEST_VALUE2, TEST_KEY2),
                         getSuffix(newValue, newSuffix)
                         ))
@@ -239,7 +235,7 @@ public class CassandraQueriesTest {
         assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(TUPLE_TYPE.newValue(TEST_VALUE, TEST_KEY)),
                 Set.of(), TEST_NEW_VERSION + 1), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK2(Set.of(getSuffix(TEST_VALUE2, TEST_KEY2),
+                .topK2(List.of(getSuffix(TEST_VALUE2, TEST_KEY2),
                         getSuffix(newValue, newSuffix)
                 ))
                 .version(TEST_NEW_VERSION + 2)
@@ -251,7 +247,7 @@ public class CassandraQueriesTest {
                 Set.of(TUPLE_TYPE.newValue(5L, "key5")),
                 TEST_NEW_VERSION + 2), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK2(Set.of(getSuffix(5L, "key5"),
+                .topK2(List.of(getSuffix(5L, "key5"),
                         getSuffix(newValue, newSuffix)))
                 .version(TEST_NEW_VERSION + 3)
                 .build()));
