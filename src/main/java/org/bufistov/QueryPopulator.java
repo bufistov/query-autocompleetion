@@ -53,6 +53,8 @@ public class QueryPopulator {
         final String prefixToCount = args.length > 2 ? args[2] : DEFAULT_PREFIX_TO_COUNT;
         log.info("Prefix to count: {}", prefixToCount);
 
+        final boolean populateQueries = args.length <= 2;
+
         List<String> queries;
         try (Stream<String> lines = Files.lines(Paths.get(queryFile))) {
             queries = lines.collect(Collectors.toList());
@@ -73,20 +75,25 @@ public class QueryPopulator {
         log.info("Average query length: {}", queries.stream().map(String::length).reduce(0, Integer::sum) / queries.size());
         log.info("Queries > 100: {}", queries.stream().filter(q -> q.length() > 100).count());
         log.info("Queries > 50: {}", queries.stream().filter(q -> q.length() > 50).count());
-        long start = System.currentTimeMillis();
-        var latencies = queries.parallelStream()
-                .map(QueryPopulator::addQuery)
-                .collect(Collectors.toList());
-        long totalTimeSeconds = Math.max(1, (System.currentTimeMillis() - start) / 1000);
-        log.info("{} queries in {} seconds", queries.size(), totalTimeSeconds);
-        log.info("Error rate: {}", failuresCounter.get() / (double) queries.size());
-        log.info("QPS {}", queries.size() / totalTimeSeconds);
-        log.info("Min latency: {}", Collections.min(latencies));
-        log.info("Max latency: {}", Collections.max(latencies));
-        log.info("Avg latency: {}", latencies.parallelStream().reduce(0L, Long::sum) / latencies.size());
-        Collections.sort(latencies);
-        log.info("P90 latency: {}", percentile(latencies, 90));
-        log.info("P99 latency: {}", percentile(latencies, 99));
+        log.info("Queries > 20: {}", queries.stream().filter(q -> q.length() > 20).count());
+        log.info("Queries > 10: {}", queries.stream().filter(q -> q.length() > 10).count());
+        if (populateQueries) {
+            long start = System.currentTimeMillis();
+
+            var latencies = queries.parallelStream()
+                    .map(QueryPopulator::addQuery)
+                    .collect(Collectors.toList());
+            long totalTimeSeconds = Math.max(1, (System.currentTimeMillis() - start) / 1000);
+            log.info("{} queries in {} seconds", queries.size(), totalTimeSeconds);
+            log.info("Error rate: {}", failuresCounter.get() / (double) queries.size());
+            log.info("QPS {}", queries.size() / totalTimeSeconds);
+            log.info("Min latency: {}", Collections.min(latencies));
+            log.info("Max latency: {}", Collections.max(latencies));
+            log.info("Avg latency: {}", latencies.parallelStream().reduce(0L, Long::sum) / latencies.size());
+            Collections.sort(latencies);
+            log.info("P90 latency: {}", percentile(latencies, 90));
+            log.info("P99 latency: {}", percentile(latencies, 99));
+        }
     }
 
     static HttpClient getHttpClient() {
