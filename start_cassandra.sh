@@ -1,7 +1,7 @@
 #!/bin/bash
 
 container_name=autocompletedemo-cassandra
-isrunning=$(docker ps --filter name=${container_name} -aq)
+isrunning=$(docker ps --filter name=${container_name} -q)
 if [[ -n "${isrunning}" ]]
 then
   echo $isrunning

@@ -53,7 +53,7 @@ public class QueryPopulator {
         final String prefixToCount = args.length > 2 ? args[2] : DEFAULT_PREFIX_TO_COUNT;
         log.info("Prefix to count: {}", prefixToCount);
 
-        final boolean populateQueries = args.length <= 2;
+        final boolean populateQueries = args.length <= 3;
 
         List<String> queries;
         try (Stream<String> lines = Files.lines(Paths.get(queryFile))) {

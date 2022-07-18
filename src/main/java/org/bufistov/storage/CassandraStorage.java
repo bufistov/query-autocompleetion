@@ -38,8 +38,9 @@ public class CassandraStorage implements Storage {
     @Override
     public PrefixTopK getTopKQueries(String prefix) {
         return Optional.ofNullable(topKMapper.get(prefix))
-                .map(item -> PrefixTopK.builder().topK(item.getTopK())
-                        .topK1(item.getTopK1())
+                .map(item -> PrefixTopK.builder()
+                        .topK(Optional.ofNullable(item.getTopK()).orElse(Set.of()))
+                        .topK1(Optional.ofNullable(item.getTopK1()).orElse(Map.of()))
                         .topK2(toSuffixCount(item.getTopK2()))
                         .version(item.getVersion()).build())
                 .orElse(PrefixTopK.builder()
@@ -94,7 +95,7 @@ public class CassandraStorage implements Storage {
 
     List<SuffixCount> toSuffixCount(Set<TupleValue> tuples) {
         if (tuples == null) {
-            return null;
+            return List.of();
         }
         return tuples.stream().map(this::fromTuple).collect(Collectors.toList());
     }

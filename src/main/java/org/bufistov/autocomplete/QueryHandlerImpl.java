@@ -92,7 +92,7 @@ public class QueryHandlerImpl implements QueryHandler {
                         throw new RuntimeException(exception);
                     }
                 } else if (status == UpdateStatus.NO_UPDATE_REQUIRED) {
-                    log.info("{} updates finished for query '{}'", query.length() - prefixLength, query);
+                    log.debug("{} updates finished for query '{}'", query.length() - prefixLength, query);
                     return;
                 } else {
                     break;
@@ -102,7 +102,7 @@ public class QueryHandlerImpl implements QueryHandler {
                 log.warn("Update topk suffixes for prefix {} failed {} times, give up", prefix, retry);
             }
         }
-        log.info("{} updates finished for query '{}' ALL", query.length(), query);
+        log.debug("{} updates finished for query '{}' ALL", query.length(), query);
     }
 
     protected UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix, Long topK) {
