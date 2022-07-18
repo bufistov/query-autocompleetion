@@ -1,5 +1,6 @@
 package org.bufistov.storage;
 
+import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import org.bufistov.exception.DependencyException;
@@ -8,6 +9,7 @@ import org.bufistov.model.*;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CassandraStorage implements Storage {
    private final Mapper<QueryCounter> queryCounterMapper;
@@ -37,6 +39,7 @@ public class CassandraStorage implements Storage {
         return Optional.ofNullable(topKMapper.get(prefix))
                 .map(item -> PrefixTopK.builder().topK(item.getTopK())
                         .topK1(item.getTopK1())
+                        .topK2(toSuffixCount(item.getTopK2()))
                         .version(item.getVersion()).build())
                 .orElse(PrefixTopK.builder()
                         .topK(Set.of())
@@ -71,7 +74,25 @@ public class CassandraStorage implements Storage {
                 .wasApplied();
     }
 
+    @Override
+    public boolean updateTopK2Queries(String prefix, Set<TupleValue> toRemove, Set<TupleValue> toAdd, Long version) {
+        return cassandraQueries.updateTopK2(prefix, toRemove, toAdd, version, getNewVersion(version)).wasApplied();
+    }
+
     private Long getNewVersion(Long version) {
         return version == null ? 1 : version + 1;
+    }
+
+    SuffixCount fromTuple(TupleValue tuple) {
+        return SuffixCount.builder().count(tuple.getLong(0))
+                .suffix(tuple.getString(1))
+                .build();
+    }
+
+    Set<SuffixCount> toSuffixCount(Set<TupleValue> tuples) {
+        if (tuples == null) {
+            return null;
+        }
+        return tuples.stream().map(this::fromTuple).collect(Collectors.toSet());
     }
 }

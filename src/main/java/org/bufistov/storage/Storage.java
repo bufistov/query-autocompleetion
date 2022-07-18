@@ -1,5 +1,6 @@
 package org.bufistov.storage;
 
+import com.datastax.driver.core.TupleValue;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
 
@@ -57,4 +58,14 @@ public interface Storage {
      * @return true if update was applied false otherwise. False means that item was modified in the middle of update.
      */
     boolean replaceSuffixCounter(String prefix, String suffix, Long newValue, Long version);
+
+    /**
+     * Update topK suffixes for given prefix.
+     * @param prefix Prefix to update
+     * @param toRemove entries to remove from topK2 set
+     * @param toAdd entries to add into topK2 set
+     * @param version version for atomic update
+     * @return true if update was applied false otherwise
+     */
+    boolean updateTopK2Queries(String prefix, Set<TupleValue> toRemove, Set<TupleValue> toAdd, Long version);
 }

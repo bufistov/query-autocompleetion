@@ -1,5 +1,6 @@
 package org.bufistov.model;
 
+import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import lombok.AllArgsConstructor;
@@ -25,5 +26,6 @@ public class PrefixTopKCassandra {
     private String prefix;
     private Set<SuffixCount> topK; // top K suffixes for given prefix
     private Map<String, Long> topK1; // top K suffixes for given prefix
+    private Set<TupleValue> topK2;//
     private Long version;
 }

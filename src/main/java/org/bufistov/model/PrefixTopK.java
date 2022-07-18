@@ -15,5 +15,6 @@ import java.util.Set;
 public class PrefixTopK {
     private Set<SuffixCount> topK; // top K suffixes for given prefix
     private Map<String, Long> topK1;
+    private Set<SuffixCount> topK2;
     private Long version;
 }

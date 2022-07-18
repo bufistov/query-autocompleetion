@@ -1,11 +1,10 @@
 package org.bufistov.storage;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.QueryLogger;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.MappingManager;
 import lombok.extern.log4j.Log4j2;
 import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.SuffixCount;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,10 +25,17 @@ import static org.hamcrest.Matchers.is;
 public class CassandraQueriesTest {
 
     static final String TEST_KEY = "1";
+    static final String TEST_KEY2 = "key2";
     static final Long TEST_VALUE = 2L;
+    static final Long TEST_VALUE2 = 3L;
     static final Long TEST_NEW_VERSION = 1L;
 
-    static final Map<String, Long> TEST_SUFFIXES = Map.of(TEST_KEY, TEST_VALUE, "key2", 3L, "key3", 4L);
+    static final Map<String, Long> TEST_SUFFIXES = Map.of(TEST_KEY, TEST_VALUE, TEST_KEY2, TEST_VALUE2,
+            "key3", 4L);
+    static final TupleType TUPLE_TYPE = TupleType.of(ProtocolVersion.V4, CodecRegistry.DEFAULT_INSTANCE,
+            DataType.bigint(), DataType.text());
+    static final Set<TupleValue> TEST_SUFFIXES2 = Set.of(TUPLE_TYPE.newValue(TEST_VALUE, TEST_KEY),
+            TUPLE_TYPE.newValue(TEST_VALUE2, TEST_KEY2));
 
     static Random random = new Random();
 
@@ -208,11 +214,61 @@ public class CassandraQueriesTest {
                 .build()));
     }
 
+    @Test
+    void test_updateTopK2_success() {
+        assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(), TEST_SUFFIXES2, null), is(true));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK2(Set.of(getSuffix(TEST_VALUE, TEST_KEY), getSuffix(TEST_VALUE2, TEST_KEY2)))
+                .version(TEST_NEW_VERSION)
+                .build()));
+
+        String newSuffix = getRandomPrefix();
+        Long newValue = 123L;
+        assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(),
+                Set.of(TUPLE_TYPE.newValue(newValue, newSuffix)), TEST_NEW_VERSION), is(true));
+        HashMap<String, Long> expectedMap = new HashMap<>(TEST_SUFFIXES);
+        expectedMap.put(newSuffix, newValue);
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK2(Set.of(getSuffix(TEST_VALUE, TEST_KEY),
+                        getSuffix(TEST_VALUE2, TEST_KEY2),
+                        getSuffix(newValue, newSuffix)
+                        ))
+                .version(TEST_NEW_VERSION + 1)
+                .build()));
+
+        assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(TUPLE_TYPE.newValue(TEST_VALUE, TEST_KEY)),
+                Set.of(), TEST_NEW_VERSION + 1), is(true));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK2(Set.of(getSuffix(TEST_VALUE2, TEST_KEY2),
+                        getSuffix(newValue, newSuffix)
+                ))
+                .version(TEST_NEW_VERSION + 2)
+                .build()));
+
+        assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(
+                TUPLE_TYPE.newValue(TEST_VALUE,TEST_KEY),
+                        TUPLE_TYPE.newValue(TEST_VALUE2, TEST_KEY2)),
+                Set.of(TUPLE_TYPE.newValue(5L, "key5")),
+                TEST_NEW_VERSION + 2), is(true));
+        assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
+                .topK2(Set.of(getSuffix(5L, "key5"),
+                        getSuffix(newValue, newSuffix)))
+                .version(TEST_NEW_VERSION + 3)
+                .build()));
+    }
+
     private String getRandomPrefix() {
         String prefix = Integer.toHexString(random.nextInt());
         if (prefix.length() > 4) {
             prefix = prefix.substring(0, 4);
         }
         return prefix + "_";
+    }
+
+    private static SuffixCount getSuffix(Long count, String suffix) {
+        return SuffixCount.builder()
+                .count(count)
+                .suffix(suffix)
+                .build();
     }
 }

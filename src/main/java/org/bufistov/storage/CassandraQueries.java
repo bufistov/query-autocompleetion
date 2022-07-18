@@ -1,6 +1,8 @@
 package org.bufistov.storage;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.TupleType;
+import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Param;
 import com.datastax.driver.mapping.annotations.Query;
@@ -34,6 +36,12 @@ public interface CassandraQueries {
     ResultSet updateTopK1(@Param("p") String prefix,
                           @Param("kr")Set<String> suffixesToRemove,
                           @Param("ns")Map<String, Long> suffixesToAdd,
+                          @Param("v") Long version, @Param("nv") Long newVersion);
+
+    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " SET topk2 = topk2 - :kr, topk2=topk2 +:ns, version=:nv WHERE prefix=:p IF version=:v")
+    ResultSet updateTopK2(@Param("p") String prefix,
+                          @Param("kr")Set<TupleValue> suffixesToRemove,
+                          @Param("ns")Set<TupleValue> suffixesToAdd,
                           @Param("v") Long version, @Param("nv") Long newVersion);
 
 
