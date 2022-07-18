@@ -6,10 +6,7 @@ import lombok.extern.log4j.Log4j2;
 import org.bufistov.SpringConfiguration;
 import org.bufistov.handler.QueryComplete;
 import org.bufistov.model.SuffixCount;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -56,6 +53,7 @@ public class QueryCompleteIntegTest {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
         var queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
+                100,
                 provideRandomInterval(),
                 suffixUpdateExecutorService(),
                 null);

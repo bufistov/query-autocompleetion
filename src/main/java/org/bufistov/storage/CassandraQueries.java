@@ -21,6 +21,10 @@ public interface CassandraQueries {
     ResultSet updateTopK(@Param("p") String prefix, @Param("t") Set<SuffixCount> suffixCounts,
                          @Param("v") Long version, @Param("nv") Long newVersion);
 
+    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " SET topk1=topk1 + :nel,version=:nv WHERE prefix=:p IF version=:v")
+    ResultSet addNewSuffix(@Param("p") String prefix, @Param("nel") Map<String, Long> newValue,
+                           @Param("v") Long version, @Param("nv") Long newVersion);
+
     @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " SET topk1[:k]=:vl,version=:nv WHERE prefix=:p IF version=:v")
     ResultSet replaceSuffixCounter(@Param("p") String prefix,
                                    @Param("k") String suffix, @Param("vl") Long value,

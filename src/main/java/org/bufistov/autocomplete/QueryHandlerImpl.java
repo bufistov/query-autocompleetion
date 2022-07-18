@@ -31,6 +31,9 @@ public class QueryHandlerImpl implements QueryHandler {
     @Value("${org.bufistov.autocomplete.max_retries_to_update_topk}")
     private Long maxRetriesToUpdateTopK;
 
+    @Value("${org.bufistov.autocomplete.max_query_size}")
+    private Integer maxQuerySize;
+
     @Autowired
     private RandomInterval randomInterval;
 
@@ -47,12 +50,13 @@ public class QueryHandlerImpl implements QueryHandler {
 
     @Override
     public void addQuery(String query) {
+        String truncatedQuery = query.length() > maxQuerySize ? query.substring(0, maxQuerySize) : query;
         log.debug("Adding query: {}", query);
-        long newValue = storage.addQuery(query);
+        long newValue = storage.addQuery(truncatedQuery);
         log.debug("New value: {}", newValue);
 
-        getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(query, newValue))
-                .addListener(() -> log.debug("Execution finished for query '{}'", query),
+        getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(truncatedQuery, newValue))
+                .addListener(() -> log.debug("Execution finished for query '{}'", truncatedQuery),
                         MoreExecutors.directExecutor());
     }
 
@@ -88,7 +92,7 @@ public class QueryHandlerImpl implements QueryHandler {
                         throw new RuntimeException(exception);
                     }
                 } else if (status == UpdateStatus.NO_UPDATE_REQUIRED) {
-                    log.debug("No update required for prefix {} query {}", prefix, query);
+                    log.info("{} updates finished for query '{}'", query.length() - prefixLength, query);
                     return;
                 } else {
                     break;
@@ -98,6 +102,7 @@ public class QueryHandlerImpl implements QueryHandler {
                 log.warn("Update topk suffixes for prefix {} failed {} times, give up", prefix, retry);
             }
         }
+        log.info("{} updates finished for query '{}' ALL", query.length(), query);
     }
 
     protected UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix, Long topK) {

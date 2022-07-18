@@ -40,6 +40,8 @@ public class QueryHandlerImplTest {
 
     private final static long VERSION = 1;
 
+    private final static int MAX_QUERY_SIZE = 100;
+
     @Mock
     RandomInterval randomInterval;
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
@@ -73,6 +75,7 @@ public class QueryHandlerImplTest {
                 .thenReturn(true);
         when(randomInterval.getMillis()).thenReturn(1L);
         queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
+                MAX_QUERY_SIZE,
                 randomInterval,
                 executorService, null);
     }
@@ -301,6 +304,7 @@ public class QueryHandlerImplTest {
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(false);
         var queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
+                MAX_QUERY_SIZE,
                 randomInterval,
                 executorService, null);
         queryHandler.addQuery(QUERY);

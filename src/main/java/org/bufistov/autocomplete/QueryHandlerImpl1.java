@@ -18,10 +18,11 @@ import java.util.stream.Collectors;
 public class QueryHandlerImpl1 extends QueryHandlerImpl {
 
     QueryHandlerImpl1(Storage storage, Long topK, Long maxRetriesToUpdateTopK,
+                      Integer maxQuerySize,
                       RandomInterval randomInterval,
                       ExecutorService executorService,
                       ListeningExecutorService listeningExecutorService) {
-        super(storage, topK, maxRetriesToUpdateTopK, randomInterval, executorService, listeningExecutorService);
+        super(storage, topK, maxRetriesToUpdateTopK, maxQuerySize, randomInterval, executorService, listeningExecutorService);
     }
 
     @Override

@@ -29,6 +29,7 @@
         </Logger>
         <Logger name="com.datastax.driver.core.QueryLogger.NORMAL" level="info" additivity="false">
             <AppenderRef ref="console"/>
+            <AppenderRef ref="rollingFileAppender"/>
         </Logger>
     </Loggers>
 </Configuration>

@@ -1,9 +1,14 @@
 package org.bufistov;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.QueryLogger;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.MappingManager;
-import org.bufistov.autocomplete.*;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.bufistov.autocomplete.QueryHandler;
+import org.bufistov.autocomplete.QueryHandlerImpl1;
+import org.bufistov.autocomplete.RandomInterval;
+import org.bufistov.autocomplete.UniformRandomInterval;
 import org.bufistov.storage.CassandraStorage;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +17,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class SpringConfiguration {
@@ -39,9 +41,15 @@ public class SpringConfiguration {
 
     @Bean
     Cluster provideCluster() {
-        return Cluster.builder().addContactPoint("localhost")
+        Cluster cluster = Cluster.builder().addContactPoint("localhost")
                 .withoutJMXReporting()
                 .build();
+        QueryLogger queryLogger = QueryLogger.builder()
+                .withMaxQueryStringLength(1000)
+                .withMaxParameterValueLength(1000)
+                .build();
+        cluster.register(queryLogger);
+        return cluster;
     }
 
     @Bean
@@ -51,8 +59,6 @@ public class SpringConfiguration {
 
     @Bean
     public ExecutorService suffixUpdateExecutorService() {
-        int cpuNum = Runtime.getRuntime().availableProcessors();
-        return new ThreadPoolExecutor(cpuNum, maxThreadPoolSize, 10, TimeUnit.SECONDS,
-                new SynchronousQueue<>(), new ThreadPoolExecutor.AbortPolicy());
+        return MoreExecutors.newDirectExecutorService();
     }
 }
