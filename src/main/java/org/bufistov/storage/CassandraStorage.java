@@ -17,11 +17,14 @@ public class CassandraStorage implements Storage {
 
     private final Mapper<PrefixTopKCassandra> topKMapper;
 
+    private final Mapper<QueryUpdateCassandra> queryUpdateMapper;
+
     private final CassandraQueries cassandraQueries;
 
     public CassandraStorage(MappingManager manager) {
         this.queryCounterMapper = manager.mapper(QueryCountCassandra.class);
         this.topKMapper = manager.mapper(PrefixTopKCassandra.class);
+        this.queryUpdateMapper = manager.mapper(QueryUpdateCassandra.class);
         this.cassandraQueries = manager.createAccessor(CassandraQueries.class);
     }
 
@@ -32,10 +35,14 @@ public class CassandraStorage implements Storage {
         if (result == null) {
             throw new DependencyException("Cannot find query " + query, null);
         }
+        var lastUpdate = queryUpdateMapper.get(query);
         return QueryCount.builder()
                 .query(query)
                 .count(result.getCount())
                 .sinceLastUpdate(result.getSinceLastUpdate())
+                .lastUpdateTime(Optional.ofNullable(lastUpdate)
+                        .map(QueryUpdateCassandra::getTopkUpdate)
+                        .orElse(null))
                 .build();
     }
 

@@ -3,8 +3,10 @@ package org.bufistov.storage;
 import com.datastax.driver.core.TupleValue;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.QueryCount;
+import org.bufistov.model.QueryUpdate;
 import org.bufistov.model.SuffixCount;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,4 +71,11 @@ public interface Storage {
      * @return true if update was applied false otherwise
      */
     boolean updateTopK2Queries(String prefix, Set<TupleValue> toRemove, Set<TupleValue> toAdd, Long version);
+
+    /**
+     * Get last topK update from the query udpate table
+     * @param query The query.
+     * @return Query update time or null if query was never updated.
+     */
+    // boolean lockQueryForTopKUpdate(String query, Instant lastUpdateTime);
 }

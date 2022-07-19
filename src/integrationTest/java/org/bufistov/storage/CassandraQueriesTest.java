@@ -1,10 +1,12 @@
 package org.bufistov.storage;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import lombok.extern.log4j.Log4j2;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.QueryCount;
+import org.bufistov.model.QueryUpdateCassandra;
 import org.bufistov.model.SuffixCount;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,6 +40,8 @@ public class CassandraQueriesTest {
 
     static Random random = new Random();
 
+    static Mapper<QueryUpdateCassandra> queryUpdateMapper;
+
     String prefix;
 
     private static final CassandraContainer cassandra = new CassandraContainer("cassandra:latest")
@@ -56,6 +61,7 @@ public class CassandraQueriesTest {
         cluster.register(queryLogger);
         Session session = cluster.connect();
         var manager = new MappingManager(session);
+        queryUpdateMapper = manager.mapper(QueryUpdateCassandra .class);
         cassandraStorage = new CassandraStorage(manager);
     }
 
@@ -75,6 +81,21 @@ public class CassandraQueriesTest {
                 .query(prefix)
                 .count(1L)
                 .sinceLastUpdate(1L)
+                .build()));
+    }
+
+    @Test
+    void test_updateQueryCounterUpdateTime_success() {
+        Date current = Date.from(Instant.now());
+        queryUpdateMapper.save(QueryUpdateCassandra.builder()
+                        .query(prefix)
+                        .topkUpdate(current)
+                .build());
+        assertThat(cassandraStorage.addQuery(prefix), is(QueryCount.builder()
+                .query(prefix)
+                .count(1L)
+                .sinceLastUpdate(1L)
+                .lastUpdateTime(current)
                 .build()));
     }
 

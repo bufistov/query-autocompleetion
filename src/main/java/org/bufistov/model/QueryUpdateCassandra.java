@@ -16,9 +16,11 @@ import static org.bufistov.Constants.CASSANDRA_KEYSPACE;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class QueryCount {
+@Table(keyspace = CASSANDRA_KEYSPACE, name = "query_update",
+       readConsistency = "ONE",
+       writeConsistency = "ANY")
+public class QueryUpdateCassandra {
+    @PartitionKey
     private String query;
-    private Long count;
-    private Long sinceLastUpdate;
-    private Date lastUpdateTime;
+    private Date topkUpdate;
 }
