@@ -2,13 +2,14 @@ package org.bufistov.storage;
 
 import com.datastax.driver.core.TupleValue;
 import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.QueryCount;
 import org.bufistov.model.SuffixCount;
 
 import java.util.Map;
 import java.util.Set;
 
 public interface Storage {
-    Long addQuery(String query);
+    QueryCount addQuery(String query);
 
     PrefixTopK getTopKQueries(String prefix);
 

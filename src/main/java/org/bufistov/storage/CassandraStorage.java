@@ -26,13 +26,17 @@ public class CassandraStorage implements Storage {
     }
 
     @Override
-    public Long addQuery(String query) {
+    public QueryCount addQuery(String query) {
         cassandraQueries.incrementCounter(1, query);
         QueryCountCassandra result = queryCounterMapper.get(query);
         if (result == null) {
             throw new DependencyException("Cannot find query " + query, null);
         }
-        return result.getCount();
+        return QueryCount.builder()
+                .query(query)
+                .count(result.getCount())
+                .sinceLastUpdate(result.getSinceLastUpdate())
+                .build();
     }
 
     @Override

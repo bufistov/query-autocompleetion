@@ -7,19 +7,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 import static org.bufistov.Constants.CASSANDRA_KEYSPACE;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(keyspace = CASSANDRA_KEYSPACE, name = "query_count",
-       readConsistency = "ONE",
-       writeConsistency = "ANY")
-public class QueryCountCassandra {
-    @PartitionKey
+public class QueryCount {
     private String query;
-    // Actual type is counter
     private Long count;
     private Long sinceLastUpdate;
+    private Instant lastUpdateTime;
 }

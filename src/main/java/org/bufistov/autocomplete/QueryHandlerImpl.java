@@ -5,10 +5,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.bufistov.model.PrefixTopK;
-import org.bufistov.model.PrefixTopKCassandra;
-import org.bufistov.model.SuffixCount;
-import org.bufistov.model.TopKQueries;
+import org.bufistov.model.*;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,12 +52,14 @@ public class QueryHandlerImpl implements QueryHandler {
     public void addQuery(String query) {
         String truncatedQuery = query.length() > maxQuerySize ? query.substring(0, maxQuerySize) : query;
         log.debug("Adding query: {}", query);
-        long newValue = storage.addQuery(truncatedQuery);
-        log.debug("New value: {}", newValue);
-
-        getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(truncatedQuery, newValue))
-                .addListener(() -> log.debug("Execution finished for query '{}'", truncatedQuery),
-                        MoreExecutors.directExecutor());
+        var result = storage.addQuery(truncatedQuery);
+        log.debug("New count value: {}", result);
+        if (topKUpdateRequired(result)) {
+            long newValue = result.getCount();
+            getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(truncatedQuery, newValue))
+                    .addListener(() -> log.debug("Execution finished for query '{}'", truncatedQuery),
+                            MoreExecutors.directExecutor());
+        }
     }
 
     @Override
@@ -69,6 +68,10 @@ public class QueryHandlerImpl implements QueryHandler {
         return TopKQueries.builder()
                 .queries(addPrefix(storage.getTopKQueries(prefix), prefix))
                 .build();
+    }
+
+    protected boolean topKUpdateRequired(QueryCount currentCount) {
+        return true;
     }
 
     protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {

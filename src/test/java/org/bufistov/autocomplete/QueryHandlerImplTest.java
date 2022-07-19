@@ -2,6 +2,7 @@ package org.bufistov.autocomplete;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.QueryCount;
 import org.bufistov.model.SuffixCount;
 import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
@@ -66,7 +67,12 @@ public class QueryHandlerImplTest {
     @BeforeEach
     public void setUp() {
         openMocks(this);
-        when(storage.addQuery(queryCaptor.capture())).thenReturn(NEW_COUNTER_VALUE);
+        when(storage.addQuery(queryCaptor.capture())).thenReturn(
+                QueryCount.builder()
+                        .query(QUERY)
+                        .count(NEW_COUNTER_VALUE)
+                        .build()
+        );
         when(storage.getTopKQueries(anyString())).thenReturn(PrefixTopK.builder()
                     .topK(Set.of())
                     .version(VERSION)
