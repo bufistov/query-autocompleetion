@@ -4,6 +4,7 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.MappingManager;
 import lombok.extern.log4j.Log4j2;
 import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.QueryCount;
 import org.bufistov.model.SuffixCount;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -66,6 +67,15 @@ public class CassandraQueriesTest {
     @BeforeEach
     void setUp() {
         prefix = getRandomPrefix();
+    }
+
+    @Test
+    void test_updateQueryCounter_success() {
+        assertThat(cassandraStorage.addQuery(prefix), is(QueryCount.builder()
+                .query(prefix)
+                .count(1L)
+                .sinceLastUpdate(1L)
+                .build()));
     }
 
     @Test

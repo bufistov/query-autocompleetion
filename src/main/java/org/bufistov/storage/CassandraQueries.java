@@ -16,7 +16,7 @@ import static org.bufistov.Constants.*;
 @Accessor
 public interface CassandraQueries {
 
-    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + QUERY_COUNT + " SET count = count + :d WHERE query=:q")
+    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + QUERY_COUNT + " SET count = count + :d, sinceLastUpdate = sinceLastUpdate+:d WHERE query=:q")
     void incrementCounter(@Param("d") long increment, @Param("q") String query);
 
     @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " SET topK=:t,version=:nv WHERE prefix=:p IF version=:v")
