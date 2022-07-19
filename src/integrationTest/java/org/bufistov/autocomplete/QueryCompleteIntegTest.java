@@ -34,6 +34,12 @@ public class QueryCompleteIntegTest {
 
     final static int MAX_THREAD_POOL_SIZE = 1000;
 
+    final static QueryHandlerConfig CONFIG = QueryHandlerConfig.builder()
+            .topK(TOPK)
+            .maxQuerySize(100)
+            .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+            .build();
+
     static final int NUM_QUERIES = 100;
 
     SpringConfiguration springConfiguration = new SpringConfiguration();
@@ -50,8 +56,7 @@ public class QueryCompleteIntegTest {
     QueryComplete provideQueryComplete() {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
-        var queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
-                100,
+        var queryHandler = new QueryHandlerImpl(storage, CONFIG,
                 provideRandomInterval(),
                 suffixUpdateExecutorService(),
                 null);

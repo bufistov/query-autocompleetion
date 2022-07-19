@@ -80,8 +80,11 @@ public class QueryHandlerImplTest {
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         when(randomInterval.getMillis()).thenReturn(1L);
-        queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
-                MAX_QUERY_SIZE,
+        queryHandler = new QueryHandlerImpl(storage, QueryHandlerConfig.builder()
+                .maxQuerySize(MAX_QUERY_SIZE)
+                .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+                .topK(TOPK)
+                .build(),
                 randomInterval,
                 executorService, null);
     }
@@ -309,8 +312,11 @@ public class QueryHandlerImplTest {
         when(randomInterval.getMillis()).thenReturn(100000L);
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(false);
-        var queryHandler = new QueryHandlerImpl(storage, TOPK, MAX_RETRIES_TO_UPDATE_TOPK,
-                MAX_QUERY_SIZE,
+        var queryHandler = new QueryHandlerImpl(storage, QueryHandlerConfig.builder()
+                .maxQuerySize(MAX_QUERY_SIZE)
+                .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+                .topK(TOPK)
+                .build(),
                 randomInterval,
                 executorService, null);
         queryHandler.addQuery(QUERY);

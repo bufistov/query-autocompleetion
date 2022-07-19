@@ -15,12 +15,11 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class QueryHandlerImpl1 extends QueryHandlerImpl {
 
-    QueryHandlerImpl1(Storage storage, Long topK, Long maxRetriesToUpdateTopK,
-                      Integer maxQuerySize,
+    QueryHandlerImpl1(Storage storage, QueryHandlerConfig config,
                       RandomInterval randomInterval,
                       ExecutorService executorService,
                       ListeningExecutorService listeningExecutorService) {
-        super(storage, topK, maxRetriesToUpdateTopK, maxQuerySize, randomInterval, executorService, listeningExecutorService);
+        super(storage, config, randomInterval, executorService, listeningExecutorService);
     }
 
     @Override

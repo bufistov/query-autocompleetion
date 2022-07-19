@@ -5,10 +5,7 @@ import com.datastax.driver.core.QueryLogger;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.MappingManager;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.bufistov.autocomplete.QueryHandler;
-import org.bufistov.autocomplete.QueryHandlerImpl1;
-import org.bufistov.autocomplete.RandomInterval;
-import org.bufistov.autocomplete.UniformRandomInterval;
+import org.bufistov.autocomplete.*;
 import org.bufistov.storage.CassandraStorage;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +23,15 @@ public class SpringConfiguration {
 
     @Value("${org.bufistov.autocomplete.max_retry_delay_millis}")
     private int maxRetryDelayMillis;
+
+    @Value("${org.bufistov.autocomplete.K}")
+    private Long topK;
+
+    @Value("${org.bufistov.autocomplete.max_retries_to_update_topk}")
+    private Long maxRetriesToUpdateTopK;
+
+    @Value("${org.bufistov.autocomplete.max_query_size}")
+    private Integer maxQuerySize;
 
     @Bean
     public QueryHandler queryHandler() {
@@ -60,5 +66,14 @@ public class SpringConfiguration {
     @Bean
     public ExecutorService suffixUpdateExecutorService() {
         return MoreExecutors.newDirectExecutorService();
+    }
+
+    @Bean
+    public QueryHandlerConfig provideQueryHandlerConfig() {
+        return QueryHandlerConfig.builder()
+                .maxQuerySize(maxQuerySize)
+                .topK(topK)
+                .maxRetriesToUpdateTopK(maxRetriesToUpdateTopK)
+                .build();
     }
 }

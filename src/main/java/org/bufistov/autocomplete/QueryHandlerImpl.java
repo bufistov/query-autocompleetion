@@ -5,14 +5,15 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.bufistov.model.*;
+import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.QueryCount;
+import org.bufistov.model.SuffixCount;
+import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -25,14 +26,8 @@ public class QueryHandlerImpl implements QueryHandler {
     @Autowired
     protected Storage storage;
 
-    @Value("${org.bufistov.autocomplete.K}")
-    private Long topK;
-
-    @Value("${org.bufistov.autocomplete.max_retries_to_update_topk}")
-    private Long maxRetriesToUpdateTopK;
-
-    @Value("${org.bufistov.autocomplete.max_query_size}")
-    private Integer maxQuerySize;
+    @Autowired
+    QueryHandlerConfig config;
 
     @Autowired
     private RandomInterval randomInterval;
@@ -50,7 +45,8 @@ public class QueryHandlerImpl implements QueryHandler {
 
     @Override
     public void addQuery(String query) {
-        String truncatedQuery = query.length() > maxQuerySize ? query.substring(0, maxQuerySize) : query;
+        String truncatedQuery = query.length() > config.getMaxQuerySize() ?
+                query.substring(0, config.getMaxQuerySize()) : query;
         log.debug("Adding query: {}", query);
         var result = storage.addQuery(truncatedQuery);
         log.debug("New count value: {}", result);
@@ -98,8 +94,8 @@ public class QueryHandlerImpl implements QueryHandler {
         for (int prefixLength = query.length(); prefixLength > 0; --prefixLength) {
             String prefix = query.substring(0, prefixLength);
             int retry = 0;
-            for (; retry < maxRetriesToUpdateTopK; ++retry) {
-                UpdateStatus status = tryUpdateTopKSuffixes(query, count, prefix, topK);
+            for (; retry < config.getMaxRetriesToUpdateTopK(); ++retry) {
+                UpdateStatus status = tryUpdateTopKSuffixes(query, count, prefix, config.getTopK());
                 if (status == UpdateStatus.CONDITION_FAILED) {
                     long sleepInterval = randomInterval.getMillis();
                     log.debug("Race updating prefix {} retry number {} after {} millis", prefix, retry + 1, sleepInterval);
@@ -117,7 +113,7 @@ public class QueryHandlerImpl implements QueryHandler {
                     break;
                 }
             }
-            if (retry == maxRetriesToUpdateTopK) {
+            if (retry == config.getMaxRetriesToUpdateTopK()) {
                 log.warn("Update topk suffixes for prefix {} failed {} times, give up", prefix, retry);
             }
         }

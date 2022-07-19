@@ -20,12 +20,11 @@ import static org.bufistov.storage.CassandraStorage.toTuple1;
 @NoArgsConstructor
 public class QueryHandlerImpl2 extends QueryHandlerImpl {
 
-    QueryHandlerImpl2(Storage storage, Long topK, Long maxRetriesToUpdateTopK,
-                      Integer maxQuerySize,
+    QueryHandlerImpl2(Storage storage, QueryHandlerConfig config,
                       RandomInterval randomInterval,
                       ExecutorService executorService,
                       ListeningExecutorService listeningExecutorService) {
-        super(storage, topK, maxRetriesToUpdateTopK, maxQuerySize, randomInterval, executorService, listeningExecutorService);
+        super(storage, config, randomInterval, executorService, listeningExecutorService);
     }
 
     @Override
