@@ -16,7 +16,7 @@ import static org.bufistov.Constants.CASSANDRA_KEYSPACE;
 @Table(keyspace = CASSANDRA_KEYSPACE, name = "query_count",
        readConsistency = "ONE",
        writeConsistency = "ANY")
-public class QueryCounter {
+public class QueryCountCassandra {
     @PartitionKey
     private String query;
     // Actual type is counter

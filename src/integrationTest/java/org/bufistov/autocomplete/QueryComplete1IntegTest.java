@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -110,9 +112,9 @@ public class QueryComplete1IntegTest {
             }
         }
 
-        HashMap<String, Long> expectedMap = new HashMap<>();
-        for (long q = NUM_QUERIES; q > Math.max(NUM_QUERIES - TOPK, 0); --q) {
-            expectedMap.put(queryPrefix + q, q);
+        List<SuffixCount> expectedMap = new ArrayList<>();
+        for (long q = Math.max(NUM_QUERIES - TOPK, 0) + 1; q <= NUM_QUERIES; ++q) {
+            expectedMap.add(getQuery(Long.toString(q), q));
         }
         await().atMost(1, TimeUnit.MINUTES)
                 .pollInterval(5, TimeUnit.SECONDS)
@@ -125,16 +127,23 @@ public class QueryComplete1IntegTest {
         var with1 = queryPrefix + "1";
         expectedMap.clear();
         for (long i = 11; i < 20; ++i) {
-            expectedMap.put(queryPrefix + i, i);
+            expectedMap.add(getQuery(Long.toString(i), i));
         }
-        expectedMap.put(queryPrefix + "100", 100L);
+        expectedMap.add(getQuery("100", 100L));
         assertThat(getCurrentTopK(with1), is(expectedMap));
 
     }
 
-    Map<String, Long> getCurrentTopK(String prefix) {
+    List<SuffixCount> getCurrentTopK(String prefix) {
         var res = queryComplete.queries(prefix);
         log.info(res.toString());
-        return res.getQueries1();
+        return res.getQueries();
+    }
+
+    SuffixCount getQuery(String suffix, long count) {
+        return SuffixCount.builder()
+                .suffix(queryPrefix + suffix)
+                .count(count)
+                .build();
     }
 }

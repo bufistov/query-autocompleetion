@@ -5,12 +5,15 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.PrefixTopKCassandra;
 import org.bufistov.model.SuffixCount;
 import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -64,8 +67,21 @@ public class QueryHandlerImpl implements QueryHandler {
     public TopKQueries getQueries(String prefix) {
         log.debug("Getting queries for prefix: {}", prefix);
         return TopKQueries.builder()
-                .queries(addPrefix(storage.getTopKQueries(prefix).getTopK(), prefix))
+                .queries(addPrefix(storage.getTopKQueries(prefix), prefix))
                 .build();
+    }
+
+    protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {
+        if (suffixCount == null) {
+            return List.of();
+        }
+        return suffixCount.getTopK().stream().sorted()
+                .map(sc -> SuffixCount.builder()
+                        .count(sc.getCount())
+                        .suffix(prefix + sc.getSuffix())
+                        .build()
+                )
+                .collect(Collectors.toList());
     }
 
     private void updateTopKSuffixesAndLogErrors(String query, Long count) {
@@ -149,13 +165,5 @@ public class QueryHandlerImpl implements QueryHandler {
             listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
         }
         return listeningExecutorService;
-    }
-
-    private Set<SuffixCount> addPrefix(Set<SuffixCount> suffixCount, String prefix) {
-        return suffixCount.stream().map(sc -> SuffixCount.builder()
-                        .count(sc.getCount())
-                        .suffix(prefix + sc.getSuffix())
-                        .build()
-                ).collect(Collectors.toSet());
     }
 }

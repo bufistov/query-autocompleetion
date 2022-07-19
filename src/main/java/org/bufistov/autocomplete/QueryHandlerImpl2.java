@@ -4,6 +4,7 @@ import com.datastax.driver.core.TupleValue;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
 import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
@@ -25,14 +26,6 @@ public class QueryHandlerImpl2 extends QueryHandlerImpl {
                       ExecutorService executorService,
                       ListeningExecutorService listeningExecutorService) {
         super(storage, topK, maxRetriesToUpdateTopK, maxQuerySize, randomInterval, executorService, listeningExecutorService);
-    }
-
-    @Override
-    public TopKQueries getQueries(String prefix) {
-        log.debug("Getting queries for prefix: {}", prefix);
-        return TopKQueries.builder()
-                .queries2(addPrefix(storage.getTopKQueries(prefix).getTopK2(), prefix))
-                .build();
     }
 
     @Override
@@ -97,12 +90,20 @@ public class QueryHandlerImpl2 extends QueryHandlerImpl {
         return applied ? UpdateStatus.SUCCESS : UpdateStatus.CONDITION_FAILED;
     }
 
-    private List<SuffixCount> addPrefix(List<SuffixCount> suffixCount, String prefix) {
-        return suffixCount.stream().map(sc -> SuffixCount.builder()
+    @Override
+    protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {
+        if (suffixCount == null) {
+            return List.of();
+        }
+        return suffixCount.getTopK2()
+                .stream()
+                .sorted()
+                .map(sc -> SuffixCount.builder()
                 .count(sc.getCount())
                 .suffix(prefix + sc.getSuffix())
                 .build()
-        ).collect(Collectors.toList());
+        )
+                .collect(Collectors.toList());
     }
 
     private Long getCurrentSuffixCount(String suffix, List<SuffixCount> topKSuffixes) {

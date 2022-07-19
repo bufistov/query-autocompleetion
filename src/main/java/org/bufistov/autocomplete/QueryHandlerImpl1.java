@@ -1,16 +1,14 @@
 package org.bufistov.autocomplete;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
-import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -23,14 +21,6 @@ public class QueryHandlerImpl1 extends QueryHandlerImpl {
                       ExecutorService executorService,
                       ListeningExecutorService listeningExecutorService) {
         super(storage, topK, maxRetriesToUpdateTopK, maxQuerySize, randomInterval, executorService, listeningExecutorService);
-    }
-
-    @Override
-    public TopKQueries getQueries(String prefix) {
-        log.debug("Getting queries for prefix: {}", prefix);
-        return TopKQueries.builder()
-                .queries1(addPrefix(storage.getTopKQueries(prefix).getTopK1(), prefix))
-                .build();
     }
 
     @Override
@@ -98,8 +88,17 @@ public class QueryHandlerImpl1 extends QueryHandlerImpl {
         return applied ? UpdateStatus.SUCCESS : UpdateStatus.CONDITION_FAILED;
     }
 
-    private Map<String, Long> addPrefix(Map<String, Long> suffixCount, String prefix) {
-        return suffixCount.entrySet().stream()
-                .collect(Collectors.toMap(entry -> prefix+ entry.getKey(), Map.Entry::getValue));
+    @Override
+    protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {
+        if (suffixCount == null) {
+            return List.of();
+        }
+        return suffixCount.getTopK1().entrySet().stream()
+                .map(x -> SuffixCount.builder()
+                        .count(x.getValue())
+                        .suffix(prefix + x.getKey())
+                        .build())
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

@@ -289,7 +289,7 @@ public class QueryHandlerImplTest {
                         .build());
         var result = queryHandler.getQueries(QUERY);
         assertThat(result, is(TopKQueries.builder()
-                .queries(Set.of(getSuffixCount("que1", 10),
+                .queries(List.of(getSuffixCount("que1", 10),
                         getSuffixCount("que2", 11),
                         getSuffixCount("que3", 12)
                         ))

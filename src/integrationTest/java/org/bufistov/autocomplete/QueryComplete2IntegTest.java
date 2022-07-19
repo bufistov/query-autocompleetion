@@ -135,7 +135,7 @@ public class QueryComplete2IntegTest {
     List<SuffixCount> getCurrentTopK(String prefix) {
         var res = queryComplete.queries(prefix);
         log.info(res.toString());
-        return res.getQueries2();
+        return res.getQueries();
     }
 
     SuffixCount getQuery(String suffix, long count) {

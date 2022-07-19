@@ -10,9 +10,7 @@ import org.junit.jupiter.api.*;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -110,8 +108,8 @@ public class QueryCompleteIntegTest {
             }
         }
 
-        HashSet<SuffixCount> expectedSet = new HashSet<>();
-        for (int q = NUM_QUERIES; q > Math.max(NUM_QUERIES - TOPK, 0); --q) {
+        List<SuffixCount> expectedSet = new ArrayList<>();
+        for (int q = (int) Math.max(NUM_QUERIES - TOPK, 0L) + 1; q <= NUM_QUERIES; ++q) {
             expectedSet.add(getQuery(Integer.toString(q), q));
         }
         await().atMost(1, TimeUnit.MINUTES)
@@ -139,7 +137,7 @@ public class QueryCompleteIntegTest {
                 .build();
     }
 
-    Set<SuffixCount> getCurrentTopK(String prefix) {
+    List<SuffixCount> getCurrentTopK(String prefix) {
         var res = queryComplete.queries(prefix);
         log.info(res.toString());
         return res.getQueries();

@@ -13,14 +13,14 @@ public class CassandraStorage implements Storage {
 
     static final TupleType SUFFIX_TUPLE_TYPE = TupleType.of(ProtocolVersion.V4, CodecRegistry.DEFAULT_INSTANCE,
             DataType.bigint(), DataType.text());
-    private final Mapper<QueryCounter> queryCounterMapper;
+    private final Mapper<QueryCountCassandra> queryCounterMapper;
 
     private final Mapper<PrefixTopKCassandra> topKMapper;
 
     private final CassandraQueries cassandraQueries;
 
     public CassandraStorage(MappingManager manager) {
-        this.queryCounterMapper = manager.mapper(QueryCounter.class);
+        this.queryCounterMapper = manager.mapper(QueryCountCassandra.class);
         this.topKMapper = manager.mapper(PrefixTopKCassandra.class);
         this.cassandraQueries = manager.createAccessor(CassandraQueries.class);
     }
@@ -28,7 +28,7 @@ public class CassandraStorage implements Storage {
     @Override
     public Long addQuery(String query) {
         cassandraQueries.incrementCounter(1, query);
-        QueryCounter result = queryCounterMapper.get(query);
+        QueryCountCassandra result = queryCounterMapper.get(query);
         if (result == null) {
             throw new DependencyException("Cannot find query " + query, null);
         }
