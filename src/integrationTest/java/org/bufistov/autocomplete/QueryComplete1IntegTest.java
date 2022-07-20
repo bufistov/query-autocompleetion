@@ -40,10 +40,15 @@ public class QueryComplete1IntegTest {
 
     final static int MAX_THREAD_POOL_SIZE = 1000;
 
+    final static long QUERY_UPDATE_MILLIS = 100;
+
+
     final static QueryHandlerConfig CONFIG = QueryHandlerConfig.builder()
             .topK(TOPK)
             .maxQuerySize(100)
             .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+            .queryUpdateMillis(QUERY_UPDATE_MILLIS)
+            .queryUpdateCount(1L)
             .build();
 
     static final int NUM_QUERIES = 100;
@@ -135,7 +140,7 @@ public class QueryComplete1IntegTest {
         for (long i = 11; i < 20; ++i) {
             expectedMap.add(getQuery(Long.toString(i), i));
         }
-        expectedMap.add(getQuery("100", 100L));
+        expectedMap.add(getQuery(Integer.toString(NUM_QUERIES), NUM_QUERIES));
         assertThat(getCurrentTopK(with1), is(expectedMap));
 
     }

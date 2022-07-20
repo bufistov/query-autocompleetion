@@ -6,12 +6,17 @@ import lombok.extern.log4j.Log4j2;
 import org.bufistov.SpringConfiguration;
 import org.bufistov.handler.QueryComplete;
 import org.bufistov.model.SuffixCount;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Clock;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -35,10 +40,14 @@ public class QueryCompleteIntegTest {
 
     final static int MAX_THREAD_POOL_SIZE = 1000;
 
+    final static long QUERY_UPDATE_MILLIS = 100;
+
     final static QueryHandlerConfig CONFIG = QueryHandlerConfig.builder()
             .topK(TOPK)
             .maxQuerySize(100)
             .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+            .queryUpdateCount(1L)
+            .queryUpdateMillis(QUERY_UPDATE_MILLIS)
             .build();
 
     static final int NUM_QUERIES = 100;

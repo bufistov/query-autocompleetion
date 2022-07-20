@@ -38,10 +38,14 @@ public class QueryComplete2IntegTest {
 
     final static int MAX_THREAD_POOL_SIZE = 1000;
 
+    final static long QUERY_UPDATE_MILLIS = 100;
+
     final static QueryHandlerConfig CONFIG = QueryHandlerConfig.builder()
             .topK(TOPK)
             .maxQuerySize(100)
             .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+            .queryUpdateCount(1L)
+            .queryUpdateMillis(QUERY_UPDATE_MILLIS)
             .build();
 
     static final int NUM_QUERIES = 100;
