@@ -176,6 +176,7 @@ public class QueryHandlerImpl implements QueryHandler {
     private synchronized ListeningExecutorService getListeningExecutorService() {
         if (listeningExecutorService == null) {
             listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
+            log.info(config);
         }
         return listeningExecutorService;
     }

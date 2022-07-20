@@ -91,3 +91,7 @@ task(runPopulator, dependsOn: 'classes', type: JavaExec) {
     mainClass = 'org.bufistov.QueryPopulator'
     classpath = sourceSets.main.runtimeClasspath
 }
+
+bootRun {
+    systemProperties System.properties
+}
