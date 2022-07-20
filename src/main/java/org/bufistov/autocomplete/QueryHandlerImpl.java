@@ -57,12 +57,15 @@ public class QueryHandlerImpl implements QueryHandler {
         var result = storage.addQuery(truncatedQuery);
         log.debug("New count value: {}", result);
         if (topKUpdateRequired(result)) {
+            log.debug("Update is required, {}", result);
             if (storage.lockQueryForTopKUpdate(query, result.getLastUpdateTime(), Date.from(clock.instant()))) {
                 storage.updateTemporalCounter(query, -result.getSinceLastUpdate());
                 getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(truncatedQuery, result.getCount()))
                         .addListener(() -> log.debug("Execution finished for query '{}'", truncatedQuery),
                                 MoreExecutors.directExecutor());
             }
+        } else {
+            log.debug("Skip topk update, {}", result);
         }
     }
 
@@ -77,6 +80,7 @@ public class QueryHandlerImpl implements QueryHandler {
     protected boolean topKUpdateRequired(QueryCount currentCount) {
         return currentCount.getCount() == 1
                 || currentCount.getSinceLastUpdate() >= config.getQueryUpdateCount()
+                || currentCount.getLastUpdateTime() == null
                 || currentCount.getLastUpdateTime().before(Date.from(
                         clock.instant().minus(config.getQueryUpdateMillis(), ChronoUnit.MILLIS)));
     }

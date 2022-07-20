@@ -37,6 +37,8 @@ public class QueryPopulator {
 
     static AtomicLong failuresCounter = new AtomicLong();
 
+    static AtomicLong queriesCounter = new AtomicLong();
+
     public static void main(String[] args) throws IOException {
         String queryFile = DEFAULT_QUERY_FILE;
         if (args.length > 0) {
@@ -123,6 +125,10 @@ public class QueryPopulator {
         if (response.statusCode() / 100 != 2) {
             log.error(response.body());
             failuresCounter.incrementAndGet();
+        }
+        var current = queriesCounter.incrementAndGet();
+        if (current % 1000 == 0) {
+            log.info("{} done", current);
         }
         return finish - start;
     }
