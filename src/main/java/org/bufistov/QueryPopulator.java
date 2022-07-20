@@ -127,8 +127,8 @@ public class QueryPopulator {
             failuresCounter.incrementAndGet();
         }
         var current = queriesCounter.incrementAndGet();
-        if (current % 1000 == 0) {
-            log.info("{} done", current);
+        if (current % 10000 == 0) {
+            log.info("{} queries done...", current);
         }
         return finish - start;
     }
