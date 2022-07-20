@@ -1,11 +1,19 @@
 package org.bufistov.storage;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.QueryLogger;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.TupleType;
+import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import lombok.extern.log4j.Log4j2;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.QueryCount;
+import org.bufistov.model.QueryCountCassandra;
 import org.bufistov.model.QueryUpdateCassandra;
 import org.bufistov.model.SuffixCount;
 import org.junit.jupiter.api.AfterAll;
@@ -16,7 +24,13 @@ import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
-import java.util.*;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -25,6 +39,7 @@ import static org.hamcrest.Matchers.is;
 @Testcontainers
 public class CassandraQueriesTest {
 
+    static final String TEST_QUERY = "query";
     static final String TEST_KEY = "1";
     static final String TEST_KEY2 = "key2";
     static final Long TEST_VALUE = 2L;
@@ -40,6 +55,7 @@ public class CassandraQueriesTest {
 
     static Random random = new Random();
 
+    static Mapper<QueryCountCassandra> queryCountMapper;
     static Mapper<QueryUpdateCassandra> queryUpdateMapper;
 
     String prefix;
@@ -61,6 +77,7 @@ public class CassandraQueriesTest {
         cluster.register(queryLogger);
         Session session = cluster.connect();
         var manager = new MappingManager(session);
+        queryCountMapper = manager.mapper(QueryCountCassandra .class);
         queryUpdateMapper = manager.mapper(QueryUpdateCassandra .class);
         cassandraStorage = new CassandraStorage(manager);
     }
@@ -322,6 +339,45 @@ public class CassandraQueriesTest {
                 .topK2(List.of(getSuffix(5L, "key5"),
                         getSuffix(newValue, newSuffix)))
                 .version(TEST_NEW_VERSION + 3)
+                .build()));
+    }
+
+    @Test
+    void test_resetTemporalCounter_success() {
+        cassandraStorage.addQuery(TEST_QUERY);
+        cassandraStorage.addQuery(TEST_QUERY);
+        assertThat(queryCountMapper.get(TEST_QUERY), is(QueryCountCassandra.builder()
+                .count(2L)
+                .query(TEST_QUERY)
+                .sinceLastUpdate(2L)
+                .build()));
+        cassandraStorage.updateTemporalCounter(TEST_QUERY, -2L);
+        assertThat(queryCountMapper.get(TEST_QUERY), is(QueryCountCassandra.builder()
+                .count(2L)
+                .query(TEST_QUERY)
+                .sinceLastUpdate(0L)
+                .build()));
+    }
+
+    @Test
+    void test_setQueryUpdateTime_success() {
+        Instant currentInstant = Instant.now();
+        Date lastUpdateDate = Date.from(currentInstant.minus(1, ChronoUnit.MINUTES));
+        queryUpdateMapper.save(QueryUpdateCassandra.builder()
+                        .query(TEST_QUERY)
+                        .topkUpdate(lastUpdateDate)
+                .build());
+        Date currentDate = Date.from(currentInstant);
+        assertThat(cassandraStorage.lockQueryForTopKUpdate(TEST_QUERY, lastUpdateDate, currentDate), is(true));
+        assertThat(queryUpdateMapper.get(TEST_QUERY), is(QueryUpdateCassandra.builder()
+                .query(TEST_QUERY)
+                .topkUpdate(currentDate)
+                .build()));
+
+        assertThat(cassandraStorage.lockQueryForTopKUpdate(TEST_QUERY, lastUpdateDate, currentDate), is(false));
+        assertThat(queryUpdateMapper.get(TEST_QUERY), is(QueryUpdateCassandra.builder()
+                .query(TEST_QUERY)
+                .topkUpdate(currentDate)
                 .build()));
     }
 

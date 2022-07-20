@@ -3,10 +3,9 @@ package org.bufistov.storage;
 import com.datastax.driver.core.TupleValue;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.QueryCount;
-import org.bufistov.model.QueryUpdate;
 import org.bufistov.model.SuffixCount;
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,7 +74,16 @@ public interface Storage {
     /**
      * Get last topK update from the query udpate table
      * @param query The query.
+     * @param lastUpdateTime Time of the last  update.
+     * @param currentTime Current time.
      * @return Query update time or null if query was never updated.
      */
-    // boolean lockQueryForTopKUpdate(String query, Instant lastUpdateTime);
+    boolean lockQueryForTopKUpdate(String query, Date lastUpdateTime, Date currentTime);
+
+    /**
+     * Increement temporal counter. Used mainly to reset it to 0.
+     * @param query The query.
+     * @param increment Value of the increment.
+     */
+    void updateTemporalCounter(String query, Long increment);
 }

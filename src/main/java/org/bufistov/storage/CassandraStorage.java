@@ -94,6 +94,16 @@ public class CassandraStorage implements Storage {
         return cassandraQueries.updateTopK2(prefix, toRemove, toAdd, version, getNewVersion(version)).wasApplied();
     }
 
+    @Override
+    public void updateTemporalCounter(String query, Long increment) {
+        cassandraQueries.updateTemporalCounter(increment, query);
+    }
+
+    @Override
+    public boolean lockQueryForTopKUpdate(String query, Date lastUpdateTime, Date currentTime) {
+        return cassandraQueries.lockForTopKUpdate(query, lastUpdateTime, currentTime).wasApplied();
+    }
+
     private Long getNewVersion(Long version) {
         return version == null ? 1 : version + 1;
     }

@@ -8,6 +8,7 @@ import com.datastax.driver.mapping.annotations.Param;
 import com.datastax.driver.mapping.annotations.Query;
 import org.bufistov.model.SuffixCount;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,6 +19,12 @@ public interface CassandraQueries {
 
     @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + QUERY_COUNT + " SET count = count + :d, sinceLastUpdate = sinceLastUpdate+:d WHERE query=:q")
     void incrementCounter(@Param("d") long increment, @Param("q") String query);
+
+    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + QUERY_COUNT + " SET sinceLastUpdate=sinceLastUpdate+:d WHERE query=:q")
+    void updateTemporalCounter(@Param("d") long increment, @Param("q") String query);
+
+    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + QUERY_UPDATE + " SET topkUpdate=:ct WHERE query=:q IF topkUpdate=:lut")
+    ResultSet lockForTopKUpdate(@Param("q") String query, @Param("lut") Date lastUpdate, @Param("ct") Date currentTime);
 
     @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " SET topK=:t,version=:nv WHERE prefix=:p IF version=:v")
     ResultSet updateTopK(@Param("p") String prefix, @Param("t") Set<SuffixCount> suffixCounts,
