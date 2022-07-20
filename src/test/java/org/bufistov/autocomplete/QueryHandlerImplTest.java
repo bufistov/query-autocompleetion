@@ -16,6 +16,7 @@ import org.mockito.stubbing.Answer;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
 public class QueryHandlerImplTest {
@@ -116,6 +124,15 @@ public class QueryHandlerImplTest {
         verify(storage, times(1)).addQuery(anyString());
         assertEquals(QUERY, queryCaptor.getValue());
         verify(storage, times(QUERY.length())).getTopKQueries(anyString());
+        ArgumentCaptor<Date> lastDateCaptor = ArgumentCaptor.forClass(Date.class);
+        ArgumentCaptor<Date> currentDateCaptor = ArgumentCaptor.forClass(Date.class);
+        verify(storage, times(1)).lockQueryForTopKUpdate(anyString(),
+                lastDateCaptor.capture(), currentDateCaptor.capture());
+        assertThat(lastDateCaptor.getValue(), is(Date.from(clock.instant())));
+        assertThat(currentDateCaptor.getValue(), is(Date.from(clock.instant())));
+
+        verify(storage, times(1)).updateTemporalCounter(anyString(), temporalIncrement.capture());
+        assertThat(temporalIncrement.getValue(), is(-NEW_COUNTER_VALUE));
         assertThat(versionCaptor.getAllValues(), is(List.of(VERSION, VERSION, VERSION)));
         assertThat(topKCaptor.getAllValues(), is(List.of(
                 Set.of(getSuffixCount("", NEW_COUNTER_VALUE)),
@@ -123,6 +140,85 @@ public class QueryHandlerImplTest {
                 Set.of(getSuffixCount("ue", NEW_COUNTER_VALUE))
         )));
         assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY, "qu", "q")));
+    }
+
+    @Test
+    public void addQuery_oneQueryNoTopKUpdate_updateAll() {
+        when(storage.addQuery(queryCaptor.capture())).thenReturn(
+                QueryCount.builder()
+                        .query(QUERY)
+                        .count(NEW_COUNTER_VALUE)
+                        .sinceLastUpdate(1L)
+                        .lastUpdateTime(Date.from(clock.instant()))
+                        .build()
+        );
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        assertEquals(QUERY, queryCaptor.getValue());
+        verify(storage, never()).getTopKQueries(anyString());
+        verify(storage, never()).lockQueryForTopKUpdate(anyString(), any(Date.class), any(Date.class));
+
+        verify(storage, never()).updateTemporalCounter(anyString(), anyLong());
+    }
+
+    @Test
+    public void addQuery_oneQueryTimeFlush_updateAll() {
+        Instant lastUpdateTime = clock.instant().minus(2, ChronoUnit.SECONDS);
+        Long temporalCounter = 1L;
+        when(storage.addQuery(queryCaptor.capture())).thenReturn(
+                QueryCount.builder()
+                        .query(QUERY)
+                        .count(NEW_COUNTER_VALUE)
+                        .sinceLastUpdate(temporalCounter)
+                        .lastUpdateTime(Date.from(lastUpdateTime))
+                        .build()
+        );
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        assertEquals(QUERY, queryCaptor.getValue());
+        verify(storage, times(QUERY.length())).getTopKQueries(anyString());
+        ArgumentCaptor<Date> lastDateCaptor = ArgumentCaptor.forClass(Date.class);
+        ArgumentCaptor<Date> currentDateCaptor = ArgumentCaptor.forClass(Date.class);
+        verify(storage, times(1)).lockQueryForTopKUpdate(anyString(),
+                lastDateCaptor.capture(), currentDateCaptor.capture());
+        assertThat(lastDateCaptor.getValue(), is(Date.from(lastUpdateTime)));
+        assertThat(currentDateCaptor.getValue(), is(Date.from(clock.instant())));
+
+        verify(storage, times(1)).updateTemporalCounter(anyString(), temporalIncrement.capture());
+        assertThat(temporalIncrement.getValue(), is(-temporalCounter));
+        assertThat(versionCaptor.getAllValues(), is(List.of(VERSION, VERSION, VERSION)));
+        assertThat(topKCaptor.getAllValues(), is(List.of(
+                Set.of(getSuffixCount("", NEW_COUNTER_VALUE)),
+                Set.of(getSuffixCount("e", NEW_COUNTER_VALUE)),
+                Set.of(getSuffixCount("ue", NEW_COUNTER_VALUE))
+        )));
+        assertThat(updatePrefixCaptor.getAllValues(), is(List.of(QUERY, "qu", "q")));
+    }
+
+    @Test
+    public void addQuery_oneQueryFirstUpdate_updateAll() {
+        Long counter = 1L;
+        when(storage.addQuery(queryCaptor.capture())).thenReturn(
+                QueryCount.builder()
+                        .query(QUERY)
+                        .count(counter)
+                        .sinceLastUpdate(counter)
+                        .lastUpdateTime(Date.from(clock.instant()))
+                        .build()
+        );
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        assertEquals(QUERY, queryCaptor.getValue());
+        verify(storage, times(QUERY.length())).getTopKQueries(anyString());
+        ArgumentCaptor<Date> lastDateCaptor = ArgumentCaptor.forClass(Date.class);
+        ArgumentCaptor<Date> currentDateCaptor = ArgumentCaptor.forClass(Date.class);
+        verify(storage, times(1)).lockQueryForTopKUpdate(anyString(),
+                lastDateCaptor.capture(), currentDateCaptor.capture());
+        assertThat(lastDateCaptor.getValue(), is(Date.from(clock.instant())));
+        assertThat(currentDateCaptor.getValue(), is(Date.from(clock.instant())));
+
+        verify(storage, times(1)).updateTemporalCounter(anyString(), temporalIncrement.capture());
+        assertThat(temporalIncrement.getValue(), is(-counter));
     }
 
     @Test
