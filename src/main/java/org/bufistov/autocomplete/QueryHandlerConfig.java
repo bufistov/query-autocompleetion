@@ -11,18 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QueryHandlerConfig {
-    @Value("${org.bufistov.autocomplete.K}")
     private Long topK;
 
-    @Value("${org.bufistov.autocomplete.max_retries_to_update_topk}")
     private Long maxRetriesToUpdateTopK;
 
-    @Value("${org.bufistov.autocomplete.max_query_size}")
     private Integer maxQuerySize;
 
-    @Value("${org.bufistov.autocomplete.query_update_millis}")
     private Long queryUpdateMillis;
 
-    @Value("${org.bufistov.autocomplete.query_update_count}")
     private Long queryUpdateCount;
 }

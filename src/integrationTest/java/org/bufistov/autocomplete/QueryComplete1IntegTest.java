@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -63,7 +64,7 @@ public class QueryComplete1IntegTest {
         var storage = springConfiguration.provideStorage(provideCluster());
         var queryHandler = new QueryHandlerImpl1(storage, CONFIG,
                 provideRandomInterval(),
-                suffixUpdateExecutorService(), null);
+                suffixUpdateExecutorService(), Clock.systemUTC(),null);
         return new QueryComplete(queryHandler);
     }
 

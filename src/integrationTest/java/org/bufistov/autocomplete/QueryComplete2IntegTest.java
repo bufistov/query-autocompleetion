@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
@@ -61,7 +62,7 @@ public class QueryComplete2IntegTest {
         var storage = springConfiguration.provideStorage(provideCluster());
         var queryHandler = new QueryHandlerImpl2(storage, CONFIG,
                 provideRandomInterval(),
-                suffixUpdateExecutorService(), null);
+                suffixUpdateExecutorService(), Clock.systemUTC(),null);
         return new QueryComplete(queryHandler);
     }
 

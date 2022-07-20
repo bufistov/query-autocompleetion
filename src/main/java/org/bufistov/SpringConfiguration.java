@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Clock;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 
@@ -32,6 +33,12 @@ public class SpringConfiguration {
 
     @Value("${org.bufistov.autocomplete.max_query_size}")
     private Integer maxQuerySize;
+
+    @Value("${org.bufistov.autocomplete.query_update_millis}")
+    private Long queryUpdateMillis;
+
+    @Value("${org.bufistov.autocomplete.query_update_count}")
+    private Long queryUpdateCount;
 
     @Bean
     public QueryHandler queryHandler() {
@@ -74,6 +81,13 @@ public class SpringConfiguration {
                 .maxQuerySize(maxQuerySize)
                 .topK(topK)
                 .maxRetriesToUpdateTopK(maxRetriesToUpdateTopK)
+                .queryUpdateMillis(queryUpdateMillis)
+                .queryUpdateCount(queryUpdateCount)
                 .build();
+    }
+
+    @Bean
+    public Clock provideClock() {
+        return Clock.systemUTC();
     }
 }
