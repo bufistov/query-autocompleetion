@@ -7,6 +7,7 @@ import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
 import org.bufistov.storage.Storage;
 
+import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -18,8 +19,9 @@ public class QueryHandlerImpl1 extends QueryHandlerImpl {
     QueryHandlerImpl1(Storage storage, QueryHandlerConfig config,
                       RandomInterval randomInterval,
                       ExecutorService executorService,
+                      Clock clock,
                       ListeningExecutorService listeningExecutorService) {
-        super(storage, config, randomInterval, executorService, listeningExecutorService);
+        super(storage, config, randomInterval, executorService, clock, listeningExecutorService);
     }
 
     @Override

@@ -12,6 +12,9 @@ import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Clock;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -35,6 +38,9 @@ public class QueryHandlerImpl implements QueryHandler {
     @Autowired
     private ExecutorService executorService;
 
+    @Autowired
+    private Clock clock;
+
     private ListeningExecutorService listeningExecutorService;
 
     protected enum UpdateStatus {
@@ -51,10 +57,12 @@ public class QueryHandlerImpl implements QueryHandler {
         var result = storage.addQuery(truncatedQuery);
         log.debug("New count value: {}", result);
         if (topKUpdateRequired(result)) {
-            long newValue = result.getCount();
-            getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(truncatedQuery, newValue))
-                    .addListener(() -> log.debug("Execution finished for query '{}'", truncatedQuery),
-                            MoreExecutors.directExecutor());
+            if (storage.lockQueryForTopKUpdate(query, result.getLastUpdateTime(), Date.from(clock.instant()))) {
+                storage.updateTemporalCounter(query, -result.getSinceLastUpdate());
+                getListeningExecutorService().submit(() -> updateTopKSuffixesAndLogErrors(truncatedQuery, result.getCount()))
+                        .addListener(() -> log.debug("Execution finished for query '{}'", truncatedQuery),
+                                MoreExecutors.directExecutor());
+            }
         }
     }
 
@@ -67,7 +75,10 @@ public class QueryHandlerImpl implements QueryHandler {
     }
 
     protected boolean topKUpdateRequired(QueryCount currentCount) {
-        return true;
+        return currentCount.getCount() == 1
+                || currentCount.getSinceLastUpdate() >= config.getQueryUpdateCount()
+                || currentCount.getLastUpdateTime().before(Date.from(
+                        clock.instant().minus(config.getQueryUpdateMillis(), ChronoUnit.MILLIS)));
     }
 
     protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {

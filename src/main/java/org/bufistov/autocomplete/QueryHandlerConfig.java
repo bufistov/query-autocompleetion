@@ -19,4 +19,10 @@ public class QueryHandlerConfig {
 
     @Value("${org.bufistov.autocomplete.max_query_size}")
     private Integer maxQuerySize;
+
+    @Value("${org.bufistov.autocomplete.query_update_millis}")
+    private Long queryUpdateMillis;
+
+    @Value("${org.bufistov.autocomplete.query_update_count}")
+    private Long queryUpdateCount;
 }

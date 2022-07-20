@@ -13,6 +13,10 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -43,8 +47,18 @@ public class QueryHandlerImplTest {
 
     private final static int MAX_QUERY_SIZE = 100;
 
+    private final static QueryHandlerConfig TEST_CONFIG = QueryHandlerConfig.builder()
+            .maxQuerySize(MAX_QUERY_SIZE)
+            .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+            .topK(TOPK)
+            .queryUpdateCount(2L)
+            .queryUpdateMillis(1000L)
+            .build();
+
     @Mock
     RandomInterval randomInterval;
+
+    Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
     ExecutorService executorService = MoreExecutors.newDirectExecutorService();
 
     QueryHandlerImpl queryHandler;
@@ -64,6 +78,9 @@ public class QueryHandlerImplTest {
     @Captor
     ArgumentCaptor<String> prefixCaptor;
 
+    @Captor
+    ArgumentCaptor<Long> temporalIncrement;
+
     @BeforeEach
     public void setUp() {
         openMocks(this);
@@ -71,8 +88,14 @@ public class QueryHandlerImplTest {
                 QueryCount.builder()
                         .query(QUERY)
                         .count(NEW_COUNTER_VALUE)
+                        .sinceLastUpdate(NEW_COUNTER_VALUE)
+                        .lastUpdateTime(Date.from(clock.instant()))
                         .build()
         );
+        when(storage.lockQueryForTopKUpdate(anyString(), any(Date.class), any(Date.class)))
+                .thenReturn(true);
+        doNothing().when(storage).updateTemporalCounter(anyString(), temporalIncrement.capture());
+
         when(storage.getTopKQueries(anyString())).thenReturn(PrefixTopK.builder()
                     .topK(Set.of())
                     .version(VERSION)
@@ -80,13 +103,11 @@ public class QueryHandlerImplTest {
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         when(randomInterval.getMillis()).thenReturn(1L);
-        queryHandler = new QueryHandlerImpl(storage, QueryHandlerConfig.builder()
-                .maxQuerySize(MAX_QUERY_SIZE)
-                .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
-                .topK(TOPK)
-                .build(),
+        queryHandler = new QueryHandlerImpl(storage, TEST_CONFIG,
                 randomInterval,
-                executorService, null);
+                executorService,
+                clock,
+                null);
     }
 
     @Test
@@ -312,13 +333,10 @@ public class QueryHandlerImplTest {
         when(randomInterval.getMillis()).thenReturn(100000L);
         when(storage.updateTopKQueries(updatePrefixCaptor.capture(), topKCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(false);
-        var queryHandler = new QueryHandlerImpl(storage, QueryHandlerConfig.builder()
-                .maxQuerySize(MAX_QUERY_SIZE)
-                .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
-                .topK(TOPK)
-                .build(),
+        var queryHandler = new QueryHandlerImpl(storage, TEST_CONFIG,
                 randomInterval,
-                executorService, null);
+                executorService, clock,
+                null);
         queryHandler.addQuery(QUERY);
         executorService.shutdownNow();
     }
