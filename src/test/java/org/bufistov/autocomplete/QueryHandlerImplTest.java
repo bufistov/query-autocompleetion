@@ -196,7 +196,7 @@ public class QueryHandlerImplTest {
     }
 
     @Test
-    public void addQuery_oneQueryFirstUpdate_updateAll() {
+    public void addQuery_oneQueryFirstUpdate_noUpdate() {
         Long counter = 1L;
         when(storage.addQuery(queryCaptor.capture())).thenReturn(
                 QueryCount.builder()
@@ -209,16 +209,8 @@ public class QueryHandlerImplTest {
         queryHandler.addQuery(QUERY);
         verify(storage, times(1)).addQuery(anyString());
         assertEquals(QUERY, queryCaptor.getValue());
-        verify(storage, times(QUERY.length())).getTopKQueries(anyString());
-        ArgumentCaptor<Date> lastDateCaptor = ArgumentCaptor.forClass(Date.class);
-        ArgumentCaptor<Date> currentDateCaptor = ArgumentCaptor.forClass(Date.class);
-        verify(storage, times(1)).lockQueryForTopKUpdate(anyString(),
-                lastDateCaptor.capture(), currentDateCaptor.capture());
-        assertThat(lastDateCaptor.getValue(), is(Date.from(clock.instant())));
-        assertThat(currentDateCaptor.getValue(), is(Date.from(clock.instant())));
-
-        verify(storage, times(1)).updateTemporalCounter(anyString(), temporalIncrement.capture());
-        assertThat(temporalIncrement.getValue(), is(-counter));
+        verify(storage, never()).getTopKQueries(anyString());
+        verify(storage, never()).lockQueryForTopKUpdate(anyString(), any(Date.class), any(Date.class));
     }
 
     @Test

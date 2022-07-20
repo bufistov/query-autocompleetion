@@ -78,11 +78,10 @@ public class QueryHandlerImpl implements QueryHandler {
     }
 
     protected boolean topKUpdateRequired(QueryCount currentCount) {
-        return currentCount.getCount() == 1
-                || currentCount.getSinceLastUpdate() >= config.getQueryUpdateCount()
-                || currentCount.getLastUpdateTime() == null
-                || currentCount.getLastUpdateTime().before(Date.from(
-                        clock.instant().minus(config.getQueryUpdateMillis(), ChronoUnit.MILLIS)));
+        return  currentCount.getSinceLastUpdate() >= config.getQueryUpdateCount()
+             || (currentCount.getLastUpdateTime() != null && currentCount.getLastUpdateTime().before(Date.from(
+                        clock.instant().minus(config.getQueryUpdateMillis(), ChronoUnit.MILLIS)))
+        );
     }
 
     protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {
