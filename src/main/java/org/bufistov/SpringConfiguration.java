@@ -4,8 +4,13 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.QueryLogger;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.MappingManager;
-import com.google.common.util.concurrent.MoreExecutors;
-import org.bufistov.autocomplete.*;
+import org.bufistov.autocomplete.QueryHandler;
+import org.bufistov.autocomplete.QueryHandlerConfig;
+import org.bufistov.autocomplete.QueryHandlerImpl;
+import org.bufistov.autocomplete.RandomInterval;
+import org.bufistov.autocomplete.UniformRandomInterval;
+import org.bufistov.autocomplete.UpdateSuffixMap;
+import org.bufistov.autocomplete.UpdateSuffixes;
 import org.bufistov.storage.CassandraStorage;
 import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +19,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Clock;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
 
 @Configuration
 public class SpringConfiguration {
@@ -42,7 +46,12 @@ public class SpringConfiguration {
 
     @Bean
     public QueryHandler queryHandler() {
-        return new QueryHandlerImpl1();
+        return new QueryHandlerImpl();
+    }
+
+    @Bean
+    public UpdateSuffixes updateSuffix() {
+        return new UpdateSuffixMap();
     }
 
     @Bean
@@ -68,11 +77,6 @@ public class SpringConfiguration {
     @Bean
     public RandomInterval provideRandomInterval() {
         return new UniformRandomInterval(new Random(0), maxRetryDelayMillis);
-    }
-
-    @Bean
-    public ExecutorService suffixUpdateExecutorService() {
-        return MoreExecutors.newDirectExecutorService();
     }
 
     @Bean

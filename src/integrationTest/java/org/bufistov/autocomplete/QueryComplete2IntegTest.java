@@ -14,10 +14,9 @@ import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Clock;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -35,8 +34,6 @@ public class QueryComplete2IntegTest {
     final static Long TOPK = 10L;
     final static Long MAX_RETRIES_TO_UPDATE_TOPK = 10L;
     final static Integer MAX_SLEEP_DELAY_MILLIS = 3000;
-
-    final static int MAX_THREAD_POOL_SIZE = 1000;
 
     final static long QUERY_UPDATE_MILLIS = 100;
 
@@ -64,9 +61,11 @@ public class QueryComplete2IntegTest {
     QueryComplete provideQueryComplete() {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
-        var queryHandler = new QueryHandlerImpl2(storage, CONFIG,
+        var updateSuffixes = new UpdateSuffixTupleSet(storage);
+        var queryHandler = new QueryHandlerImpl(storage, CONFIG,
+                updateSuffixes,
                 provideRandomInterval(),
-                suffixUpdateExecutorService(), Clock.systemUTC(),null);
+                Clock.systemUTC());
         return new QueryComplete(queryHandler);
     }
 
@@ -82,12 +81,6 @@ public class QueryComplete2IntegTest {
 
     RandomInterval provideRandomInterval() {
         return new UniformRandomInterval(new Random(0), MAX_SLEEP_DELAY_MILLIS);
-    }
-
-    public ExecutorService suffixUpdateExecutorService() {
-        int cpuNum = Runtime.getRuntime().availableProcessors();
-        return new ThreadPoolExecutor(cpuNum, MAX_THREAD_POOL_SIZE, 10, TimeUnit.SECONDS,
-                new SynchronousQueue<>(), new ThreadPoolExecutor.AbortPolicy());
     }
 
     @BeforeAll

@@ -1,36 +1,40 @@
 package org.bufistov.autocomplete;
 
 import com.datastax.driver.core.TupleValue;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
-import org.bufistov.model.TopKQueries;
 import org.bufistov.storage.Storage;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Clock;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static org.bufistov.autocomplete.TopKUpdateStatus.CONDITION_FAILED;
+import static org.bufistov.autocomplete.TopKUpdateStatus.NO_UPDATE_REQUIRED;
+import static org.bufistov.autocomplete.TopKUpdateStatus.SUCCESS;
 import static org.bufistov.storage.CassandraStorage.toTuple;
 import static org.bufistov.storage.CassandraStorage.toTuple1;
 
-@Log4j2
 @NoArgsConstructor
-public class QueryHandlerImpl2 extends QueryHandlerImpl {
+@AllArgsConstructor
+public class UpdateSuffixTupleSet implements UpdateSuffixes {
 
-    QueryHandlerImpl2(Storage storage, QueryHandlerConfig config,
-                      RandomInterval randomInterval,
-                      ExecutorService executorService,
-                      Clock clock,
-                      ListeningExecutorService listeningExecutorService) {
-        super(storage, config, randomInterval, executorService, clock, listeningExecutorService);
-    }
+    @Autowired
+    protected Storage storage;
 
     @Override
-    protected UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix, Long topK) {
+    public TopKUpdateStatus updateTopKSuffixes(String query, Long count, String prefix, Long topK) {
         var result = storage.getTopKQueries(prefix);
         var topKSuffixes = result.getTopK2();
         Long currentVersion = result.getVersion();
@@ -38,7 +42,7 @@ public class QueryHandlerImpl2 extends QueryHandlerImpl {
             // Special case when topK parameter was decreased. We need to prune extra suffixes from the table.
             topKSuffixes = pruneExtraSuffixes(prefix, topKSuffixes, topK, currentVersion);
             if (topKSuffixes.isEmpty()) {
-                return UpdateStatus.CONDITION_FAILED;
+                return CONDITION_FAILED;
             }
             currentVersion = currentVersion == null ? 1 : currentVersion + 1;
 
@@ -66,7 +70,23 @@ public class QueryHandlerImpl2 extends QueryHandlerImpl {
                 }
             }
         }
-        return UpdateStatus.NO_UPDATE_REQUIRED;
+        return NO_UPDATE_REQUIRED;
+    }
+
+    @Override
+    public List<SuffixCount> toSortedList(PrefixTopK suffixCount) {
+        if (suffixCount == null) {
+            return List.of();
+        }
+        return suffixCount.getTopK2()
+                .stream()
+                .sorted()
+                .map(sc -> SuffixCount.builder()
+                        .count(sc.getCount())
+                        .suffix(sc.getSuffix())
+                        .build()
+                )
+                .collect(Collectors.toList());
     }
 
     private List<SuffixCount> pruneExtraSuffixes(String prefix, List<SuffixCount> topKSuffixes,
@@ -87,24 +107,8 @@ public class QueryHandlerImpl2 extends QueryHandlerImpl {
         }
     }
 
-    private UpdateStatus getStatus(boolean applied) {
-        return applied ? UpdateStatus.SUCCESS : UpdateStatus.CONDITION_FAILED;
-    }
-
-    @Override
-    protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {
-        if (suffixCount == null) {
-            return List.of();
-        }
-        return suffixCount.getTopK2()
-                .stream()
-                .sorted()
-                .map(sc -> SuffixCount.builder()
-                .count(sc.getCount())
-                .suffix(prefix + sc.getSuffix())
-                .build()
-        )
-                .collect(Collectors.toList());
+    private TopKUpdateStatus getStatus(boolean applied) {
+        return applied ? SUCCESS : CONDITION_FAILED;
     }
 
     private Long getCurrentSuffixCount(String suffix, List<SuffixCount> topKSuffixes) {

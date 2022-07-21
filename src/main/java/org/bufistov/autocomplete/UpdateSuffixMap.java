@@ -1,31 +1,35 @@
 package org.bufistov.autocomplete;
 
-import com.google.common.util.concurrent.ListeningExecutorService;
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.bufistov.model.PrefixTopK;
 import org.bufistov.model.SuffixCount;
 import org.bufistov.storage.Storage;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Clock;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-@Log4j2
-@NoArgsConstructor
-public class QueryHandlerImpl1 extends QueryHandlerImpl {
+import static org.bufistov.autocomplete.TopKUpdateStatus.CONDITION_FAILED;
+import static org.bufistov.autocomplete.TopKUpdateStatus.NO_UPDATE_REQUIRED;
+import static org.bufistov.autocomplete.TopKUpdateStatus.SUCCESS;
 
-    QueryHandlerImpl1(Storage storage, QueryHandlerConfig config,
-                      RandomInterval randomInterval,
-                      ExecutorService executorService,
-                      Clock clock,
-                      ListeningExecutorService listeningExecutorService) {
-        super(storage, config, randomInterval, executorService, clock, listeningExecutorService);
-    }
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdateSuffixMap implements UpdateSuffixes {
+
+    @Autowired
+    protected Storage storage;
 
     @Override
-    protected UpdateStatus tryUpdateTopKSuffixes(String query, Long count, String prefix, Long topK) {
+    public TopKUpdateStatus updateTopKSuffixes(String query, Long count, String prefix, Long topK) {
         var result = storage.getTopKQueries(prefix);
         var topKSuffixes = result.getTopK1();
         Long currentVersion = result.getVersion();
@@ -33,7 +37,7 @@ public class QueryHandlerImpl1 extends QueryHandlerImpl {
             // Special case when topK parameter was decreased. We need to prune extra suffixes from the table.
             topKSuffixes = pruneExtraSuffixes(prefix, topKSuffixes, topK, currentVersion);
             if (topKSuffixes.isEmpty()) {
-                return UpdateStatus.CONDITION_FAILED;
+                return CONDITION_FAILED;
             }
             currentVersion = currentVersion == null ? 1 : currentVersion + 1;
 
@@ -55,7 +59,21 @@ public class QueryHandlerImpl1 extends QueryHandlerImpl {
                         Map.of(suffix, count), currentVersion));
             }
         }
-        return UpdateStatus.NO_UPDATE_REQUIRED;
+        return NO_UPDATE_REQUIRED;
+    }
+
+    @Override
+    public List<SuffixCount> toSortedList(PrefixTopK suffixCount) {
+        if (suffixCount == null) {
+            return List.of();
+        }
+        return suffixCount.getTopK1().entrySet().stream()
+                .map(x -> SuffixCount.builder()
+                        .count(x.getValue())
+                        .suffix(x.getKey())
+                        .build())
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     private static Comparator<Map.Entry<String, Long>> suffixComparator() {
@@ -85,21 +103,7 @@ public class QueryHandlerImpl1 extends QueryHandlerImpl {
         }
     }
 
-    private UpdateStatus getStatus(boolean applied) {
-        return applied ? UpdateStatus.SUCCESS : UpdateStatus.CONDITION_FAILED;
-    }
-
-    @Override
-    protected List<SuffixCount> addPrefix(PrefixTopK suffixCount, String prefix) {
-        if (suffixCount == null) {
-            return List.of();
-        }
-        return suffixCount.getTopK1().entrySet().stream()
-                .map(x -> SuffixCount.builder()
-                        .count(x.getValue())
-                        .suffix(prefix + x.getKey())
-                        .build())
-                .sorted()
-                .collect(Collectors.toList());
+    private TopKUpdateStatus getStatus(boolean applied) {
+        return applied ? SUCCESS : CONDITION_FAILED;
     }
 }
