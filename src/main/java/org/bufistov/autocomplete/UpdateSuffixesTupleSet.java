@@ -9,15 +9,10 @@ import org.bufistov.storage.Storage;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static org.bufistov.autocomplete.TopKUpdateStatus.CONDITION_FAILED;
@@ -28,7 +23,7 @@ import static org.bufistov.storage.CassandraStorage.toTuple1;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateSuffixTupleSet implements UpdateSuffixes {
+public class UpdateSuffixesTupleSet implements UpdateSuffixes {
 
     @Autowired
     protected Storage storage;

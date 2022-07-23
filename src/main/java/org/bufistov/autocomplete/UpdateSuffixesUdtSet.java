@@ -18,7 +18,7 @@ import static org.bufistov.autocomplete.TopKUpdateStatus.SUCCESS;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateSuffixUdtSet implements UpdateSuffixes {
+public class UpdateSuffixesUdtSet implements UpdateSuffixes {
 
     @Autowired
     protected Storage storage;

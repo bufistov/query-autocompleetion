@@ -9,7 +9,7 @@ import org.bufistov.autocomplete.QueryHandlerConfig;
 import org.bufistov.autocomplete.QueryHandlerImpl;
 import org.bufistov.autocomplete.RandomInterval;
 import org.bufistov.autocomplete.UniformRandomInterval;
-import org.bufistov.autocomplete.UpdateSuffixMap;
+import org.bufistov.autocomplete.UpdateSuffixesMap;
 import org.bufistov.autocomplete.UpdateSuffixes;
 import org.bufistov.storage.CassandraStorage;
 import org.bufistov.storage.Storage;
@@ -51,7 +51,7 @@ public class SpringConfiguration {
 
     @Bean
     public UpdateSuffixes updateSuffix() {
-        return new UpdateSuffixMap();
+        return new UpdateSuffixesMap();
     }
 
     @Bean

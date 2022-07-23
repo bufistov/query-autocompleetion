@@ -61,7 +61,7 @@ public class QueryCompleteIntegTest {
     QueryComplete provideQueryComplete() {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
-        var updateSuffixes = new UpdateSuffixUdtSet(storage);
+        var updateSuffixes = new UpdateSuffixesUdtSet(storage);
         var queryHandler = new QueryHandlerImpl(storage, CONFIG,
                 updateSuffixes,
                 provideRandomInterval(),
