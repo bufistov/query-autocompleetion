@@ -4,6 +4,7 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.QueryLogger;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.MappingManager;
+import lombok.extern.log4j.Log4j2;
 import org.bufistov.autocomplete.QueryHandler;
 import org.bufistov.autocomplete.QueryHandlerConfig;
 import org.bufistov.autocomplete.QueryHandlerImpl;
@@ -21,6 +22,7 @@ import java.time.Clock;
 import java.util.Random;
 
 @Configuration
+@Log4j2
 public class SpringConfiguration {
 
     @Value("${org.bufistov.autocomplete.max_thread_pool_size}")
@@ -81,13 +83,15 @@ public class SpringConfiguration {
 
     @Bean
     public QueryHandlerConfig provideQueryHandlerConfig() {
-        return QueryHandlerConfig.builder()
+        var result = QueryHandlerConfig.builder()
                 .maxQuerySize(maxQuerySize)
                 .topK(topK)
                 .maxRetriesToUpdateTopK(maxRetriesToUpdateTopK)
                 .queryUpdateMillis(queryUpdateMillis)
                 .queryUpdateCount(queryUpdateCount)
                 .build();
+        log.info(result);
+        return result;
     }
 
     @Bean
