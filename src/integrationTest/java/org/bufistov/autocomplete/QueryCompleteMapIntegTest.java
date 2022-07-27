@@ -59,11 +59,11 @@ public class QueryCompleteMapIntegTest {
             .withInitScript("create_tables.cqlsh")
             .withJmxReporting(false);
 
-    QueryComplete provideQueryComplete() {
+    QueryComplete provideQueryComplete(QueryHandlerConfig config) {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
         var updateSuffixes = new UpdateSuffixesMap(storage);
-        var queryHandler = new QueryHandlerImpl(storage, CONFIG,
+        var queryHandler = new QueryHandlerImpl(storage, config,
                 updateSuffixes,
                 provideRandomInterval(),
                 Clock.systemUTC());
@@ -96,7 +96,7 @@ public class QueryCompleteMapIntegTest {
 
     @BeforeEach
     void setUp() {
-        queryComplete = provideQueryComplete();
+        queryComplete = provideQueryComplete(CONFIG);
         queryPrefix = Integer.toHexString(random.nextInt());
         if (queryPrefix.length() > 4) {
             queryPrefix = queryPrefix.substring(0, 4);
@@ -107,12 +107,7 @@ public class QueryCompleteMapIntegTest {
     @Test
     void test_100QueriesAdded_suffixCountsAreUpdated() {
         log.info("Query prefix: {}", queryPrefix);
-        for (int q = 1; q <= NUM_QUERIES; ++q) {
-            String query = queryPrefix + q;
-            for (int i = 0; i < q; ++i) {
-                queryComplete.addQuery(query);
-            }
-        }
+        submitQueries(NUM_QUERIES);
 
         List<SuffixCount> expectedMap = new ArrayList<>();
         for (long q = Math.max(NUM_QUERIES - TOPK, 0) + 1; q <= NUM_QUERIES; ++q) {
@@ -133,7 +128,42 @@ public class QueryCompleteMapIntegTest {
         }
         expectedMap.add(getQuery(Integer.toString(NUM_QUERIES), NUM_QUERIES));
         assertThat(getCurrentTopK(with1), is(expectedMap));
+    }
 
+    @Test
+    void test_configChanged_extraSuffixesPruned() {
+        log.info("Query prefix: {}", queryPrefix);
+        int NUM_QUERIES = 10;
+        submitQueries(NUM_QUERIES);
+        List<SuffixCount> expectedMap = new ArrayList<>();
+        for (long q = 1; q <= NUM_QUERIES; ++q) {
+            expectedMap.add(getQuery(Long.toString(q), q));
+        }
+        await().atMost(1, TimeUnit.MINUTES)
+                .pollInterval(5, TimeUnit.SECONDS)
+                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedMap));
+
+        queryComplete = provideQueryComplete(QueryHandlerConfig.builder()
+                .topK(3L)
+                .maxQuerySize(100)
+                .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+                .queryUpdateMillis(QUERY_UPDATE_MILLIS)
+                .queryUpdateCount(1L)
+                .build());
+
+        queryComplete.addQuery(queryPrefix + "10");
+
+        expectedMap.clear();
+        expectedMap.add(getQuery("8", 8));
+        expectedMap.add(getQuery("9", 9));
+        expectedMap.add(getQuery("10", 11));
+        await().atMost(1, TimeUnit.MINUTES)
+                .pollInterval(5, TimeUnit.SECONDS)
+                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedMap));
+
+        for (int prefixLength = 2; prefixLength <= queryPrefix.length(); ++prefixLength) {
+            assertThat(getCurrentTopK(queryPrefix.substring(0, prefixLength)), is(expectedMap));
+        }
     }
 
     List<SuffixCount> getCurrentTopK(String prefix) {
@@ -147,5 +177,14 @@ public class QueryCompleteMapIntegTest {
                 .suffix(queryPrefix + suffix)
                 .count(count)
                 .build();
+    }
+
+    void submitQueries(int numQueries) {
+        for (int q = 1; q <= numQueries; ++q) {
+            String query = queryPrefix + q;
+            for (int i = 0; i < q; ++i) {
+                queryComplete.addQuery(query);
+            }
+        }
     }
 }
