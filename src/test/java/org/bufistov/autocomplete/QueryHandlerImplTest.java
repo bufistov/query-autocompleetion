@@ -19,8 +19,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -45,7 +47,7 @@ public class QueryHandlerImplTest {
 
     private final static String QUERY = "que";
 
-    private final static int MAX_QUERY_SIZE = 100;
+    private final static int MAX_QUERY_SIZE = 10;
 
     private final static QueryHandlerConfig TEST_CONFIG = QueryHandlerConfig.builder()
             .maxQuerySize(MAX_QUERY_SIZE)
@@ -208,6 +210,49 @@ public class QueryHandlerImplTest {
         queryHandler.addQuery(QUERY);
         verify(updateSuffixes, times((int)MAX_RETRIES_TO_UPDATE_TOPK * QUERY.length()))
                 .updateTopKSuffixes(anyString(), anyLong(), anyString(), anyLong());
+    }
+
+    @Test
+    public void addQuery_noUpdateRequired_success() {
+        ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> prefixCaptor = ArgumentCaptor.forClass(String.class);
+        when(updateSuffixes.updateTopKSuffixes(queryCaptor.capture(), newCounterCaptor.capture(),
+                prefixCaptor.capture(), topKCaptor.capture()))
+                .thenReturn(TopKUpdateStatus.NO_UPDATE_REQUIRED);
+        queryHandler.addQuery(QUERY);
+        verify(updateSuffixes, times(1))
+                .updateTopKSuffixes(anyString(), anyLong(), anyString(), anyLong());
+    }
+
+    @Test
+    public void addQuery_updateSuffixesThrows_success() {
+        when(updateSuffixes.updateTopKSuffixes(queryCaptor.capture(), newCounterCaptor.capture(),
+                prefixCaptor.capture(), topKCaptor.capture()))
+                .thenThrow(RuntimeException.class);
+        queryHandler.addQuery(QUERY);
+        verify(updateSuffixes, times(1))
+                .updateTopKSuffixes(anyString(), anyLong(), anyString(), anyLong());
+    }
+
+    @Test
+    public void addQuery_longQueryTruncated_success() {
+        String longQuery = "long query query";
+        assertThat(longQuery.length(), greaterThan(MAX_QUERY_SIZE));
+        queryHandler.addQuery(longQuery);
+        assertThat(queryCaptor.getValue(), is(longQuery.substring(0, MAX_QUERY_SIZE)));
+    }
+
+    @Test
+    public void addQuery_interruptedException_success() throws InterruptedException {
+        when(updateSuffixes.updateTopKSuffixes(queryCaptor.capture(), newCounterCaptor.capture(),
+                prefixCaptor.capture(), topKCaptor.capture()))
+                .thenReturn(TopKUpdateStatus.CONDITION_FAILED);
+        when(randomInterval.getMillis()).thenReturn(1000_000L);
+        var threadPool = Executors.newSingleThreadExecutor();
+        threadPool.submit(() -> queryHandler.addQuery(QUERY));
+        Thread.yield();
+        threadPool.shutdownNow();
+        assertThat(threadPool.isShutdown(), is(true));
     }
 
     @Test
