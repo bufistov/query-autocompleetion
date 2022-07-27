@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.is;
  */
 @Log4j2
 @Testcontainers
-public class QueryCompleteIntegTest {
+public class QueryCompleteMapIntegTest {
 
     final static Long TOPK = 10L;
     final static Long MAX_RETRIES_TO_UPDATE_TOPK = 10L;
@@ -37,12 +37,13 @@ public class QueryCompleteIntegTest {
 
     final static long QUERY_UPDATE_MILLIS = 100;
 
+
     final static QueryHandlerConfig CONFIG = QueryHandlerConfig.builder()
             .topK(TOPK)
             .maxQuerySize(100)
             .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
-            .queryUpdateCount(1L)
             .queryUpdateMillis(QUERY_UPDATE_MILLIS)
+            .queryUpdateCount(1L)
             .build();
 
     static final int NUM_QUERIES = 100;
@@ -61,7 +62,7 @@ public class QueryCompleteIntegTest {
     QueryComplete provideQueryComplete() {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
-        var updateSuffixes = new UpdateSuffixesUdtSet(storage);
+        var updateSuffixes = new UpdateSuffixesMap(storage);
         var queryHandler = new QueryHandlerImpl(storage, CONFIG,
                 updateSuffixes,
                 provideRandomInterval(),
@@ -113,26 +114,32 @@ public class QueryCompleteIntegTest {
             }
         }
 
-        List<SuffixCount> expectedSet = new ArrayList<>();
-        for (int q = (int) Math.max(NUM_QUERIES - TOPK, 0L) + 1; q <= NUM_QUERIES; ++q) {
-            expectedSet.add(getQuery(Integer.toString(q), q));
+        List<SuffixCount> expectedMap = new ArrayList<>();
+        for (long q = Math.max(NUM_QUERIES - TOPK, 0) + 1; q <= NUM_QUERIES; ++q) {
+            expectedMap.add(getQuery(Long.toString(q), q));
         }
         await().atMost(1, TimeUnit.MINUTES)
                 .pollInterval(5, TimeUnit.SECONDS)
-                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedSet));
+                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedMap));
 
         for (int prefixLength = 2; prefixLength <= queryPrefix.length(); ++prefixLength) {
-            assertThat(getCurrentTopK(queryPrefix.substring(0, prefixLength)), is(expectedSet));
+            assertThat(getCurrentTopK(queryPrefix.substring(0, prefixLength)), is(expectedMap));
         }
 
         var with1 = queryPrefix + "1";
-        expectedSet.clear();
-        for (int i = 11; i < 20; ++i) {
-            expectedSet.add(getQuery(Integer.toString(i), i));
+        expectedMap.clear();
+        for (long i = 11; i < 20; ++i) {
+            expectedMap.add(getQuery(Long.toString(i), i));
         }
-        expectedSet.add(getQuery("100", 100));
-        assertThat(getCurrentTopK(with1), is(expectedSet));
+        expectedMap.add(getQuery(Integer.toString(NUM_QUERIES), NUM_QUERIES));
+        assertThat(getCurrentTopK(with1), is(expectedMap));
 
+    }
+
+    List<SuffixCount> getCurrentTopK(String prefix) {
+        var res = queryComplete.queries(prefix);
+        log.info(res.toString());
+        return res.getQueries();
     }
 
     SuffixCount getQuery(String suffix, long count) {
@@ -140,11 +147,5 @@ public class QueryCompleteIntegTest {
                 .suffix(queryPrefix + suffix)
                 .count(count)
                 .build();
-    }
-
-    List<SuffixCount> getCurrentTopK(String prefix) {
-        var res = queryComplete.queries(prefix);
-        log.info(res.toString());
-        return res.getQueries();
     }
 }

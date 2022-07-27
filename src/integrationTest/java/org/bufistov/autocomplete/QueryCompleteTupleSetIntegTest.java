@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.is;
  */
 @Log4j2
 @Testcontainers
-public class QueryComplete1IntegTest {
+public class QueryCompleteTupleSetIntegTest {
 
     final static Long TOPK = 10L;
     final static Long MAX_RETRIES_TO_UPDATE_TOPK = 10L;
@@ -37,13 +37,12 @@ public class QueryComplete1IntegTest {
 
     final static long QUERY_UPDATE_MILLIS = 100;
 
-
     final static QueryHandlerConfig CONFIG = QueryHandlerConfig.builder()
             .topK(TOPK)
             .maxQuerySize(100)
             .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
-            .queryUpdateMillis(QUERY_UPDATE_MILLIS)
             .queryUpdateCount(1L)
+            .queryUpdateMillis(QUERY_UPDATE_MILLIS)
             .build();
 
     static final int NUM_QUERIES = 100;
@@ -62,7 +61,7 @@ public class QueryComplete1IntegTest {
     QueryComplete provideQueryComplete() {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
-        var updateSuffixes = new UpdateSuffixesMap(storage);
+        var updateSuffixes = new UpdateSuffixesTupleSet(storage);
         var queryHandler = new QueryHandlerImpl(storage, CONFIG,
                 updateSuffixes,
                 provideRandomInterval(),
@@ -114,25 +113,25 @@ public class QueryComplete1IntegTest {
             }
         }
 
-        List<SuffixCount> expectedMap = new ArrayList<>();
+        List<SuffixCount> expectedList = new ArrayList<>();
         for (long q = Math.max(NUM_QUERIES - TOPK, 0) + 1; q <= NUM_QUERIES; ++q) {
-            expectedMap.add(getQuery(Long.toString(q), q));
+            expectedList.add(getQuery(Long.toString(q), q));
         }
         await().atMost(1, TimeUnit.MINUTES)
                 .pollInterval(5, TimeUnit.SECONDS)
-                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedMap));
+                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedList));
 
         for (int prefixLength = 2; prefixLength <= queryPrefix.length(); ++prefixLength) {
-            assertThat(getCurrentTopK(queryPrefix.substring(0, prefixLength)), is(expectedMap));
+            assertThat(getCurrentTopK(queryPrefix.substring(0, prefixLength)), is(expectedList));
         }
 
         var with1 = queryPrefix + "1";
-        expectedMap.clear();
+        expectedList.clear();
         for (long i = 11; i < 20; ++i) {
-            expectedMap.add(getQuery(Long.toString(i), i));
+            expectedList.add(getQuery(Long.toString(i), i));
         }
-        expectedMap.add(getQuery(Integer.toString(NUM_QUERIES), NUM_QUERIES));
-        assertThat(getCurrentTopK(with1), is(expectedMap));
+        expectedList.add(getQuery("100", 100L));
+        assertThat(getCurrentTopK(with1), is(expectedList));
 
     }
 

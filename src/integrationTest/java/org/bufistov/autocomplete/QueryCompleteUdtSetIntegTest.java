@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.is;
  */
 @Log4j2
 @Testcontainers
-public class QueryComplete2IntegTest {
+public class QueryCompleteUdtSetIntegTest {
 
     final static Long TOPK = 10L;
     final static Long MAX_RETRIES_TO_UPDATE_TOPK = 10L;
@@ -61,7 +61,7 @@ public class QueryComplete2IntegTest {
     QueryComplete provideQueryComplete() {
         log.info("Cassandra port: {}", cassandra.getFirstMappedPort());
         var storage = springConfiguration.provideStorage(provideCluster());
-        var updateSuffixes = new UpdateSuffixesTupleSet(storage);
+        var updateSuffixes = new UpdateSuffixesUdtSet(storage);
         var queryHandler = new QueryHandlerImpl(storage, CONFIG,
                 updateSuffixes,
                 provideRandomInterval(),
@@ -113,32 +113,26 @@ public class QueryComplete2IntegTest {
             }
         }
 
-        List<SuffixCount> expectedList = new ArrayList<>();
-        for (long q = Math.max(NUM_QUERIES - TOPK, 0) + 1; q <= NUM_QUERIES; ++q) {
-            expectedList.add(getQuery(Long.toString(q), q));
+        List<SuffixCount> expectedSet = new ArrayList<>();
+        for (int q = (int) Math.max(NUM_QUERIES - TOPK, 0L) + 1; q <= NUM_QUERIES; ++q) {
+            expectedSet.add(getQuery(Integer.toString(q), q));
         }
         await().atMost(1, TimeUnit.MINUTES)
                 .pollInterval(5, TimeUnit.SECONDS)
-                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedList));
+                .until(() -> getCurrentTopK(queryPrefix.substring(0, 1)), is(expectedSet));
 
         for (int prefixLength = 2; prefixLength <= queryPrefix.length(); ++prefixLength) {
-            assertThat(getCurrentTopK(queryPrefix.substring(0, prefixLength)), is(expectedList));
+            assertThat(getCurrentTopK(queryPrefix.substring(0, prefixLength)), is(expectedSet));
         }
 
         var with1 = queryPrefix + "1";
-        expectedList.clear();
-        for (long i = 11; i < 20; ++i) {
-            expectedList.add(getQuery(Long.toString(i), i));
+        expectedSet.clear();
+        for (int i = 11; i < 20; ++i) {
+            expectedSet.add(getQuery(Integer.toString(i), i));
         }
-        expectedList.add(getQuery("100", 100L));
-        assertThat(getCurrentTopK(with1), is(expectedList));
+        expectedSet.add(getQuery("100", 100));
+        assertThat(getCurrentTopK(with1), is(expectedSet));
 
-    }
-
-    List<SuffixCount> getCurrentTopK(String prefix) {
-        var res = queryComplete.queries(prefix);
-        log.info(res.toString());
-        return res.getQueries();
     }
 
     SuffixCount getQuery(String suffix, long count) {
@@ -146,5 +140,11 @@ public class QueryComplete2IntegTest {
                 .suffix(queryPrefix + suffix)
                 .count(count)
                 .build();
+    }
+
+    List<SuffixCount> getCurrentTopK(String prefix) {
+        var res = queryComplete.queries(prefix);
+        log.info(res.toString());
+        return res.getQueries();
     }
 }
