@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const AutoComplete = ({ data }) => {
+const AutoComplete = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [suggestionIndex, setSuggestionIndex] = useState(0);
     const [suggestionsActive, setSuggestionsActive] = useState(false);
