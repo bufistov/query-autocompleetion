@@ -81,14 +81,16 @@ const AutoComplete = ({ data }) => {
       };
 
       return (
-        <form className="autocomplete">
+        <form className="autocomplete" onSubmit={(e) => {
+            e.preventDefault();
+            return false;
+          }}>
           <input
             type="text"
             placeholder="Type query"
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            className="large"
           />
           {suggestionsActive && <Suggestions />}
         </form>
