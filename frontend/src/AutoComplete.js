@@ -52,12 +52,13 @@ const AutoComplete = ({ data }) => {
           }
           setSuggestionIndex(suggestionIndex + 1);
         }
-        // ENTER
-        else if (e.keyCode === 13) {
+        // TAB
+        else if (e.keyCode === 9) {
             if (suggestionsActive) {
-                setValue(suggestions[suggestionIndex]);
-                setSuggestionIndex(0);
-                setSuggestionsActive(false);
+              e.preventDefault();
+              setValue(suggestions[suggestionIndex]);
+              setSuggestionIndex(0);
+              setSuggestionsActive(false);
             }
         }
       };
