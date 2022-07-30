@@ -24,6 +24,7 @@ public class QueryComplete {
     }
 
     @PostMapping(value = "/add_query", consumes = {MediaType.TEXT_PLAIN_VALUE})
+    @CrossOrigin(originPatterns = {"*"})
     public void addQuery(@RequestBody String query) {
         queryHandler.addQuery(query);
     }
