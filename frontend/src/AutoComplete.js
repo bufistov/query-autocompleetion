@@ -10,11 +10,22 @@ const AutoComplete = ({ data }) => {
         const query = e.target.value.toLowerCase();
         setValue(e.target.value);
         if (query.length > 0) {
-          const filterSuggestions = data.filter(
-            (suggestion) => suggestion.toLowerCase().indexOf(query) > -1
-          );
-          setSuggestions(filterSuggestions);
-          setSuggestionsActive(true);
+            let completions = [];
+            fetch(`http://localhost:8080/queries?prefix=${query}`)
+            .then(
+                 (response) => response.json()
+                )
+                .then(function (data) {
+                    for (let i = data.queries.length - 1; i >= 0; --i) {
+                      completions.push(data.queries[i].suffix);
+                    }
+                    setSuggestions(completions);
+                    setSuggestionsActive(true);
+                    return true;
+                  }).catch(function (err) {
+                    console.warn('Something went wrong.', err);
+                    return false;
+                  });
         } else {
           setSuggestionsActive(false);
         }
