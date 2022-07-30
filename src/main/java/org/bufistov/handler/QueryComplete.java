@@ -18,6 +18,7 @@ public class QueryComplete {
     private QueryHandler queryHandler;
 
     @GetMapping(value = "/queries", produces = {MediaType.APPLICATION_JSON_VALUE})
+    @CrossOrigin(originPatterns = {"*"})
     public TopKQueries queries(@RequestParam("prefix") String prefix) {
         return queryHandler.getQueries(prefix);
     }
