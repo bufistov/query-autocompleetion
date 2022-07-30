@@ -1,14 +1,16 @@
-.App {
+.container1 {
   text-align: center;
   position: absolute;
-  top: 50%;
-  left: 48%;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .Header {
-  position: absolute;
-  top: 45%;
-  left: 48%;
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .App-logo {
@@ -48,4 +50,21 @@
 
 .active {
   background: lightgray;
+}
+
+ul.suggestions {
+  list-style-type: none;
+}
+
+.suggestions {
+  text-align: left;
+  position: fixed;
+  margin-top: 1%;
+  margin-left: 7%;
+  padding: 0%;
+}
+
+input {
+  height: 30px;
+  width: 250px;
 }

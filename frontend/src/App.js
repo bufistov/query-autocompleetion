@@ -4,9 +4,9 @@ import { autoCompleteData } from "./data.js";
 
 function App() {
   return (
-    <div>
+    <div className="container1">
       <div className="Header">
-        <p>Autocomplete demo</p>
+        <h2>Query autocomplete demo</h2>
       </div>
       <div className="App">
         <Autocomplete data={autoCompleteData} />

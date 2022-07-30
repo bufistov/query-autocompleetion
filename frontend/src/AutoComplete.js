@@ -8,7 +8,7 @@ const AutoComplete = ({ data }) => {
 
     const handleChange = (e) => {
         const query = e.target.value.toLowerCase();
-        setValue(query);
+        setValue(e.target.value);
         if (query.length > 0) {
           const filterSuggestions = data.filter(
             (suggestion) => suggestion.toLowerCase().indexOf(query) > -1
@@ -70,16 +70,17 @@ const AutoComplete = ({ data }) => {
       };
 
       return (
-        <div className="autocomplete">
+        <form className="autocomplete">
           <input
             type="text"
             placeholder="Type query"
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            className="large"
           />
           {suggestionsActive && <Suggestions />}
-        </div>
+        </form>
       );
 };
 
