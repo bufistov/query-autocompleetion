@@ -1,17 +1,20 @@
 import { useState } from "react";
 
+const DEMO_HOST = "localhost:8080";
+
 const AutoComplete = () => {
     const [suggestions, setSuggestions] = useState([]);
     const [suggestionIndex, setSuggestionIndex] = useState(0);
     const [suggestionsActive, setSuggestionsActive] = useState(false);
     const [value, setValue] = useState("");
 
+    const normalizeQuery = (query) => query.toLowerCase();
     const handleChange = (e) => {
-        const query = e.target.value.toLowerCase();
+        const query = normalizeQuery(e.target.value);
         setValue(e.target.value);
         if (query.length > 0) {
             let completions = [];
-            fetch(`http://localhost:8080/queries?prefix=${query}`)
+            fetch(`http://${DEMO_HOST}/queries?prefix=${query}`)
             .then(
                  (response) => response.json()
                 )
@@ -81,9 +84,23 @@ const AutoComplete = () => {
         );
       };
 
+      const addQuery = (query) => {
+        console.log("Query: " + query);
+        fetch(`http://${DEMO_HOST}/add_query`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application.json',
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: normalizeQuery(query),
+        })
+      }
+
       return (
-        <form className="autocomplete" onSubmit={(e) => {
+        <form className="autocomplete" autocomplete="off" onSubmit={(e) => {
+            console.log(value);
             e.preventDefault();
+            addQuery(value);
             return false;
           }}>
           <input
