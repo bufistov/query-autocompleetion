@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-const DEMO_HOST = "localhost:8080";
+const DEMO_PORT = process.env.BACKEND_PORT || 8080;
+const DEMO_HOST = "localhost";
 
 const AutoComplete = () => {
     const [suggestions, setSuggestions] = useState([]);
@@ -14,7 +15,7 @@ const AutoComplete = () => {
         setValue(e.target.value);
         if (query.length > 0) {
             let completions = [];
-            fetch(`http://${DEMO_HOST}/queries?prefix=${query}`)
+            fetch(`http://${DEMO_HOST}:${DEMO_PORT}/queries?prefix=${query}`)
             .then(
                  (response) => response.json()
                 )
@@ -86,7 +87,7 @@ const AutoComplete = () => {
 
       const addQuery = (query) => {
         console.log("Query: " + query);
-        fetch(`http://${DEMO_HOST}/add_query`, {
+        fetch(`http://${DEMO_HOST}:${DEMO_PORT}/add_query`, {
           method: 'POST',
           headers: {
             Accept: 'application.json',
