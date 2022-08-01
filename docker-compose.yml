@@ -1,0 +1,37 @@
+version: '3.5'
+
+services:
+  cassandra:
+    image: cassandra
+    volumes:
+      - ./datadc:/var/lib/cassandra
+      - ./:/app
+
+  webserver:
+    image: openjdk:11-jdk-slim
+    environment:
+      - ORG_BUFISTOV_AUTOCOMPLETE_CASSANDRA_HOST=cassandra
+      - ORG_BUFISTOV_LOG_LEVEL=info
+      - SERVER_PORT=8080
+    volumes:
+      - ./:/webserver
+    ports:
+      - "8080:8080"
+    working_dir: /webserver
+    depends_on:
+      - cassandra
+    restart: on-failure
+    command: bash -c "./gradlew bootrun"
+
+  frontend:
+    image: node:latest
+    environment:
+      - BACKEND_PORT=8383
+    volumes:
+      - ./frontend:/frontend
+    ports:
+      - "3003:3000"
+    depends_on:
+      - webserver
+    working_dir: /frontend
+    command: bash -c "npm i && npm start"
