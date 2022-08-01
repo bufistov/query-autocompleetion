@@ -46,6 +46,9 @@ public class SpringConfiguration {
     @Value("${org.bufistov.autocomplete.query_update_count}")
     private Long queryUpdateCount;
 
+    @Value("${org.bufistov.autocomplete.cassandra_host}")
+    private String cassandraHost;
+
     @Bean
     public QueryHandler queryHandler() {
         return new QueryHandlerImpl();
@@ -65,7 +68,8 @@ public class SpringConfiguration {
 
     @Bean
     Cluster provideCluster() {
-        Cluster cluster = Cluster.builder().addContactPoint("localhost")
+        Cluster cluster = Cluster.builder()
+                .addContactPoint(cassandraHost)
                 .withoutJMXReporting()
                 .build();
         QueryLogger queryLogger = QueryLogger.builder()

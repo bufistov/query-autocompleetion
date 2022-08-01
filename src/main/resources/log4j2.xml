@@ -23,7 +23,7 @@
             <AppenderRef ref="console"/>
             <AppenderRef ref="rollingFileAppender"/>
         </Root>
-        <Logger name="org.bufistov" level="info" additivity="false">
+        <Logger name="org.bufistov" level="${env:ORG_BUFISTOV_LOG_LEVEL:-info}" additivity="false">
             <AppenderRef ref="console"/>
             <AppenderRef ref="rollingFileAppender"/>
         </Logger>
