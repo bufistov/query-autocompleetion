@@ -46,6 +46,9 @@ public class SpringConfiguration {
     @Value("${org.bufistov.autocomplete.query_update_count}")
     private Long queryUpdateCount;
 
+    @Value("${org.bufistov.autocomplete.first_query_update_count}")
+    private Long firstQueryUpdateCount;
+
     @Value("${org.bufistov.storage.cassandra_host}")
     private String cassandraHost;
 
@@ -93,6 +96,7 @@ public class SpringConfiguration {
                 .maxRetriesToUpdateTopK(maxRetriesToUpdateTopK)
                 .queryUpdateMillis(queryUpdateMillis)
                 .queryUpdateCount(queryUpdateCount)
+                .firstQueryUpdateCount(firstQueryUpdateCount)
                 .build();
         log.info(result);
         return result;

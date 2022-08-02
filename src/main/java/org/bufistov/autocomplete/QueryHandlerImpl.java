@@ -67,8 +67,9 @@ public class QueryHandlerImpl implements QueryHandler {
     private boolean topKUpdateRequired(QueryCount currentCount) {
         return  currentCount.getSinceLastUpdate() >= config.getQueryUpdateCount()
              || (currentCount.getLastUpdateTime() != null && currentCount.getLastUpdateTime().before(Date.from(
-                        clock.instant().minus(config.getQueryUpdateMillis(), ChronoUnit.MILLIS)))
-        );
+                        clock.instant().minus(config.getQueryUpdateMillis(), ChronoUnit.MILLIS))))
+             || (currentCount.getLastUpdateTime() == null
+                && currentCount.getCount() >= config.getFirstQueryUpdateCount());
     }
 
     private List<SuffixCount> addPrefix(List<SuffixCount> suffixCount, String prefix) {

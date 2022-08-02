@@ -20,4 +20,6 @@ public class QueryHandlerConfig {
     private Long queryUpdateMillis;
 
     private Long queryUpdateCount;
+
+    private Long firstQueryUpdateCount;
 }

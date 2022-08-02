@@ -44,6 +44,7 @@ public class QueryCompleteMapIntegTest {
             .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
             .queryUpdateMillis(QUERY_UPDATE_MILLIS)
             .queryUpdateCount(1L)
+            .firstQueryUpdateCount(1L)
             .build();
 
     static final int NUM_QUERIES = 100;

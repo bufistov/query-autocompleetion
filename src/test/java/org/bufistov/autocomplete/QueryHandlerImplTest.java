@@ -55,6 +55,7 @@ public class QueryHandlerImplTest {
             .topK(TOPK)
             .queryUpdateCount(2L)
             .queryUpdateMillis(1000L)
+            .firstQueryUpdateCount(20L)
             .build();
 
     @Mock
@@ -186,6 +187,36 @@ public class QueryHandlerImplTest {
         assertEquals(QUERY, queryCaptor.getValue());
         verify(storage, never()).getTopKQueries(anyString());
         verify(storage, never()).lockQueryForTopKUpdate(anyString(), any(Date.class), any(Date.class));
+    }
+
+    @Test
+    public void addQuery_firstQueryUpdateThresholdLow_updated() {
+        var config = QueryHandlerConfig.builder()
+                .maxQuerySize(MAX_QUERY_SIZE)
+                .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
+                .topK(TOPK)
+                .queryUpdateCount(2L)
+                .queryUpdateMillis(1000L)
+                .firstQueryUpdateCount(1L)
+                .build();
+        Long counter = 1L;
+        when(storage.addQuery(queryCaptor.capture())).thenReturn(
+                QueryCount.builder()
+                        .query(QUERY)
+                        .count(counter)
+                        .sinceLastUpdate(counter)
+                        .lastUpdateTime(null)
+                        .build()
+        );
+        queryHandler = new QueryHandlerImpl(storage, config,
+                updateSuffixes,
+                randomInterval,
+                clock);
+
+        queryHandler.addQuery(QUERY);
+        verify(storage, times(1)).addQuery(anyString());
+        assertEquals(QUERY, queryCaptor.getValue());
+        verify(storage, times(1)).lockQueryForTopKUpdate(anyString(), any(), any(Date.class));
     }
 
     @Test

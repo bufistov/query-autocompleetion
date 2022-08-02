@@ -44,7 +44,7 @@ public class QueryPopulator {
 
     static AtomicLong queriesCounter = new AtomicLong();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         String queryFile = DEFAULT_QUERY_FILE;
         if (args.length > 0) {
             queryFile = args[0];

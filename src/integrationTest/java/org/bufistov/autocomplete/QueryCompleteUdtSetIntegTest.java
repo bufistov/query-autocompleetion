@@ -43,6 +43,7 @@ public class QueryCompleteUdtSetIntegTest {
             .maxRetriesToUpdateTopK(MAX_RETRIES_TO_UPDATE_TOPK)
             .queryUpdateCount(1L)
             .queryUpdateMillis(QUERY_UPDATE_MILLIS)
+            .firstQueryUpdateCount(1L)
             .build();
 
     static final int NUM_QUERIES = 100;
