@@ -46,7 +46,7 @@ public class SpringConfiguration {
     @Value("${org.bufistov.autocomplete.query_update_count}")
     private Long queryUpdateCount;
 
-    @Value("${org.bufistov.autocomplete.cassandra_host}")
+    @Value("${org.bufistov.storage.cassandra_host}")
     private String cassandraHost;
 
     @Bean
