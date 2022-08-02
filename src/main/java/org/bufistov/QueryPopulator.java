@@ -5,7 +5,10 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
@@ -21,14 +24,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
 @Log4j2
 public class QueryPopulator {
-    static final String DEFAULT_QUERY_FILE = "aol_2006_100K_queries.txt";
+    static final String DEFAULT_QUERY_FILE = "aol_2006_100K_queries.txt.gz";
     static final int DEFAULT_NUM_THREADS = 16;
 
     static final String DEFAULT_PREFIX_TO_COUNT = "www";
@@ -57,10 +62,8 @@ public class QueryPopulator {
 
         final boolean populateQueries = args.length <= 3;
 
-        List<String> queries;
-        try (Stream<String> lines = Files.lines(Paths.get(queryFile))) {
-            queries = lines.collect(Collectors.toList());
-        }
+        List<String> queries = readQueries(queryFile);
+
         log.info("Read {} queries", queries.size());
         Map<String, Long> counted = queries.parallelStream().collect(
                 Collectors.groupingBy(Function.identity(),Collectors.counting()));
@@ -136,5 +139,39 @@ public class QueryPopulator {
     public static long percentile(List<Long> latencies, double percentile) {
         int index = (int) Math.ceil(percentile / 100.0 * latencies.size());
         return latencies.get(index - 1);
+    }
+
+    static List<String> readQueries(String fileName) {
+        if (fileName.endsWith(".gz")) {
+            return readQueriesCompressed(fileName);
+        } else {
+            return readQueriesNotCompressed(fileName);
+        }
+    }
+
+    static List<String> readQueriesNotCompressed(String fileName) {
+        try (var inputFileStream = new FileInputStream(fileName)) {
+            return getLines(inputFileStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static List<String> readQueriesCompressed(String fileName) {
+        try (var inputFileStream = new GZIPInputStream(new FileInputStream(fileName))) {
+            return getLines(inputFileStream);
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
+    static List<String> getLines(InputStream inputStream) {
+        try(Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8)) {
+            ArrayList<String> lines = new ArrayList<>();
+            while (scanner.hasNextLine()) {
+                lines.add(scanner.nextLine());
+            }
+            return lines;
+        }
     }
 }
