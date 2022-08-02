@@ -15,8 +15,13 @@ of the same document.
 To run demo on local machine [docker](https://www.docker.com/)
 must be installed and running. Internet connection is also required
 to download all the dependencies and docker images.
-Note that the docker compose file
+
+Notes:
+
+- The docker compose file
 exposes ports 8080 and 3000 to the local host, so these ports must be available.
+- The demo adds one million queries, and will use most of the CPU/disk
+bandwith of the host machine during few minutes.
 
 ```bash
 docker compose up
@@ -24,7 +29,7 @@ docker compose up
 
 eventually starts one webserver instance, one cassandra instance, demo GUI
 and starts queries "populator" that adds 1 million of real queries to
-the database. It might take some time for all services to be up.
+the database. It might take several minutes for all services to be up.
 
 This log message of **query-autocompleetion-webserver-1** container indicates that webserver is up and running:
 
