@@ -63,10 +63,11 @@ public class SpringConfiguration {
     }
 
     @Bean
-    public Storage provideStorage(Cluster cluster) {
+    public Storage provideStorage(Cluster cluster,
+                                  @Value("${org.bufistov.storage.topk_ttl_seconds}") Integer topKTtl) {
         Session session = cluster.connect();
         var manager = new MappingManager(session);
-        return new CassandraStorage(manager);
+        return new CassandraStorage(manager, topKTtl);
     }
 
     @Bean

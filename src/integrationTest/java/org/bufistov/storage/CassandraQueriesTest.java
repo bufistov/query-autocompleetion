@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -45,6 +47,8 @@ public class CassandraQueriesTest {
     static final Long TEST_VALUE = 2L;
     static final Long TEST_VALUE2 = 3L;
     static final Long TEST_NEW_VERSION = 1L;
+
+    static final Integer TTL_SECONDS = 3600;
 
     static final Map<String, Long> TEST_SUFFIXES = Map.of(TEST_KEY, TEST_VALUE, TEST_KEY2, TEST_VALUE2,
             "key3", 4L);
@@ -66,6 +70,8 @@ public class CassandraQueriesTest {
 
     private static CassandraStorage cassandraStorage;
 
+    private static MappingManager manager;
+
     @BeforeAll
     static void beforeAll() {
         cassandra.start();
@@ -76,10 +82,10 @@ public class CassandraQueriesTest {
                 .build();
         cluster.register(queryLogger);
         Session session = cluster.connect();
-        var manager = new MappingManager(session);
+        manager = new MappingManager(session);
         queryCountMapper = manager.mapper(QueryCountCassandra .class);
         queryUpdateMapper = manager.mapper(QueryUpdateCassandra .class);
-        cassandraStorage = new CassandraStorage(manager);
+        cassandraStorage = new CassandraStorage(manager, TTL_SECONDS);
     }
 
     @AfterAll
@@ -267,6 +273,28 @@ public class CassandraQueriesTest {
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 1)
                 .build()));
+    }
+
+    @Test
+    void test_mapTtl_success() {
+        var ttlSeconds = 2;
+        var fastStorage = new CassandraStorage(manager, ttlSeconds);
+        final String key3 = "key3";
+        var testSuffixes = Map.of(TEST_KEY, TEST_VALUE, TEST_KEY2, TEST_VALUE2, key3, 4L);
+        assertThat(cassandraStorage.addSuffixes(prefix, testSuffixes, null), is(true));
+        assertThat(fastStorage.replaceSuffixCounter(prefix, key3, 0L, 1L), is(true));
+        // key3 is evicted
+        await()
+                .atMost(30, TimeUnit.SECONDS)
+                .pollInterval(5, TimeUnit.SECONDS)
+                .until(() -> fastStorage.getTopKQueries(prefix), is(
+                        PrefixTopK.builder()
+                                .topK(Set.of())
+                                .topK1(Map.of(TEST_KEY, TEST_VALUE, TEST_KEY2, TEST_VALUE2))
+                                .topK2(List.of())
+                                .version(null) // version is also evicted, as it is always updated
+                                .build())
+                );
     }
 
     @Test

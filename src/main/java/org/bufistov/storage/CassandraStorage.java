@@ -1,12 +1,25 @@
 package org.bufistov.storage;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TupleType;
+import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import org.bufistov.exception.DependencyException;
-import org.bufistov.model.*;
+import org.bufistov.model.PrefixTopK;
+import org.bufistov.model.PrefixTopKCassandra;
+import org.bufistov.model.QueryCount;
+import org.bufistov.model.QueryCountCassandra;
+import org.bufistov.model.QueryUpdateCassandra;
+import org.bufistov.model.SuffixCount;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CassandraStorage implements Storage {
@@ -21,11 +34,14 @@ public class CassandraStorage implements Storage {
 
     private final CassandraQueries cassandraQueries;
 
-    public CassandraStorage(MappingManager manager) {
+    private final Integer topKTtl;
+
+    public CassandraStorage(MappingManager manager, Integer topKTtl) {
         this.queryCounterMapper = manager.mapper(QueryCountCassandra.class);
         this.topKMapper = manager.mapper(PrefixTopKCassandra.class);
         this.queryUpdateMapper = manager.mapper(QueryUpdateCassandra.class);
         this.cassandraQueries = manager.createAccessor(CassandraQueries.class);
+        this.topKTtl = topKTtl;
     }
 
     @Override
@@ -69,23 +85,28 @@ public class CassandraStorage implements Storage {
 
     @Override
     public boolean addSuffixes(String prefix, Map<String, Long> suffixes, Long version) {
-        return cassandraQueries.updateTopK1(prefix, Set.of(), suffixes, version, getNewVersion(version)).wasApplied();
+        return cassandraQueries.updateTopK1(prefix, Set.of(), suffixes,
+                version, getNewVersion(version),
+                topKTtl).wasApplied();
     }
 
     @Override
     public boolean removeSuffixes(String prefix, Set<String> suffixes, Long version) {
-        return cassandraQueries.updateTopK1(prefix, suffixes, Map.of(), version, getNewVersion(version))
+        return cassandraQueries.updateTopK1(prefix, suffixes, Map.of(), version, getNewVersion(version),
+                        topKTtl)
                 .wasApplied();
     }
 
     @Override
     public boolean updateTopK1Queries(String prefix, Set<String> toRemove, Map<String, Long> toAdd, Long version) {
-         return cassandraQueries.updateTopK1(prefix, toRemove, toAdd, version, getNewVersion(version)).wasApplied();
+         return cassandraQueries.updateTopK1(prefix, toRemove, toAdd, version, getNewVersion(version),
+                 topKTtl).wasApplied();
     }
 
     @Override
     public boolean replaceSuffixCounter(String prefix, String suffix, Long newValue, Long version) {
-        return cassandraQueries.updateTopK1(prefix, Set.of(), Map.of(suffix, newValue), version, getNewVersion(version))
+        return cassandraQueries.updateTopK1(prefix, Set.of(), Map.of(suffix, newValue),
+                        version, getNewVersion(version), topKTtl)
                 .wasApplied();
     }
 

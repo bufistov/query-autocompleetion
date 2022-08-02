@@ -32,11 +32,12 @@ public interface CassandraQueries {
     ResultSet updateTopK(@Param("p") String prefix, @Param("t") Set<SuffixCount> suffixCounts,
                          @Param("v") Long version, @Param("nv") Long newVersion);
 
-    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " USING TTL 86400 SET topk1 = topk1 - :kr, topk1=topk1 +:ns, version=:nv WHERE prefix=:p IF version=:v")
+    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " USING TTL :ttl SET topk1 = topk1 - :kr, topk1=topk1 +:ns, version=:nv WHERE prefix=:p IF version=:v")
     ResultSet updateTopK1(@Param("p") String prefix,
                           @Param("kr")Set<String> suffixesToRemove,
                           @Param("ns")Map<String, Long> suffixesToAdd,
-                          @Param("v") Long version, @Param("nv") Long newVersion);
+                          @Param("v") Long version, @Param("nv") Long newVersion,
+                          @Param("ttl") Integer ttlSeconds);
 
     @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " SET topk2 = topk2 - :kr, topk2=topk2 +:ns, version=:nv WHERE prefix=:p IF version=:v")
     ResultSet updateTopK2(@Param("p") String prefix,
