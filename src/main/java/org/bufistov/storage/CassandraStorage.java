@@ -85,7 +85,7 @@ public class CassandraStorage implements Storage {
 
     @Override
     public boolean replaceSuffixCounter(String prefix, String suffix, Long newValue, Long version) {
-        return cassandraQueries.replaceSuffixCounter(prefix, suffix, newValue, version, getNewVersion(version))
+        return cassandraQueries.updateTopK1(prefix, Set.of(), Map.of(suffix, newValue), version, getNewVersion(version))
                 .wasApplied();
     }
 

@@ -1,7 +1,6 @@
 package org.bufistov.storage;
 
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.TupleType;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Param;
@@ -12,7 +11,10 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-import static org.bufistov.Constants.*;
+import static org.bufistov.Constants.CASSANDRA_KEYSPACE;
+import static org.bufistov.Constants.PREFIX_TOPK;
+import static org.bufistov.Constants.QUERY_COUNT;
+import static org.bufistov.Constants.QUERY_UPDATE;
 
 @Accessor
 public interface CassandraQueries {
@@ -29,11 +31,6 @@ public interface CassandraQueries {
     @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " SET topK=:t,version=:nv WHERE prefix=:p IF version=:v")
     ResultSet updateTopK(@Param("p") String prefix, @Param("t") Set<SuffixCount> suffixCounts,
                          @Param("v") Long version, @Param("nv") Long newVersion);
-
-    @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " USING TTL 86400 SET topk1[:k]=:vl,version=:nv WHERE prefix=:p IF version=:v")
-    ResultSet replaceSuffixCounter(@Param("p") String prefix,
-                                   @Param("k") String suffix, @Param("vl") Long value,
-                                   @Param("v") Long version, @Param("nv") Long newVersion);
 
     @Query("UPDATE " + CASSANDRA_KEYSPACE + "." + PREFIX_TOPK + " USING TTL 86400 SET topk1 = topk1 - :kr, topk1=topk1 +:ns, version=:nv WHERE prefix=:p IF version=:v")
     ResultSet updateTopK1(@Param("p") String prefix,
