@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS autocompletedemo.query_count (
 CREATE TABLE IF NOT EXISTS autocompletedemo.query_update (
     query text,
     topkUpdate timestamp,
-    PRIMARY KEY (query));
+    PRIMARY KEY (query))
+WITH default_time_to_live=86400;
 
 CREATE TYPE IF NOT EXISTS autocompletedemo.SuffixCount(
   suffix text,
@@ -27,4 +28,5 @@ CREATE TABLE IF NOT EXISTS autocompletedemo.prefix_topk (
   topK2 set<tuple<bigint,text>>,
   version bigint,
   PRIMARY KEY (prefix)
-);
+)
+WITH default_time_to_live=86400;
