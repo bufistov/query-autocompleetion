@@ -7,8 +7,9 @@ of the same document.
 ## Main requirements
 
 - Get completions p90 latency <= 100ms
-- 1000 queries per second, QPS, can be handled by single host deployment
-- Unicode charset support
+- 1000 queries per second, QPS, can be handled on my mac with 16GB of RAM
+- Scale horizontally
+- Support unicode charset
 
 ## Run demo
 
@@ -53,12 +54,12 @@ should work.
 Once all services are up and running open this link in browser:
 http://localhost:3000
 
-type queries in the text box. On enter press query is actually
-added into database. Notice that the query must be added at least 5 times (press enter 5 times)
+type queries in the text box. On 'enter' key press query is actually
+added into database. Notice that the query must be added at least 3 times (press enter 3 times)
 for the first topK rank update. Later updates for the same query
 will happen every 10 new occurrence or every 5 seconds.
 
-## Stop demo
+## Destroy demo
 
 ```bash
 docker compose down
