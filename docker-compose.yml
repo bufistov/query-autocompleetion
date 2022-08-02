@@ -7,6 +7,16 @@ services:
       - ./datadc:/var/lib/cassandra
       - ./:/app
 
+  cassandra-create-tables:
+    container_name: cassandra-create-tables
+    image: cassandra
+    depends_on:
+      - cassandra
+    volumes:
+      - ./src/main/resources:/resources
+    restart: on-failure
+    command: cqlsh cassandra -f /resources/create_tables.cqlsh
+
   webserver:
     image: openjdk:11-jdk-slim
     environment:
@@ -30,7 +40,7 @@ services:
     volumes:
       - ./frontend:/frontend
     ports:
-      - "3003:3000"
+      - "3000:3000"
     depends_on:
       - webserver
     working_dir: /frontend
