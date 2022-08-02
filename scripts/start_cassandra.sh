@@ -6,5 +6,5 @@ if [[ -n "${isrunning}" ]]
 then
   echo $isrunning
 else
-  docker run --name  ${container_name} -v "$(pwd)/data:/var/lib/cassandra"  -p 9042:9042 -d cassandra:latest
+  docker run --name  ${container_name} -v "$(pwd)/data:/var/lib/cassandra" -v "$(pwd)/src/main/resources:/resources"  -p 9042:9042 -d cassandra:latest
 fi
