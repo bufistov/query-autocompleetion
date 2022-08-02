@@ -117,7 +117,7 @@ public class QueryPopulator {
     @SneakyThrows
     static long addQuery(String query) {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/add_query"))
+                .uri(URI.create(String.format("http://%s:8080/add_query", getBackend())))
                 .timeout(Duration.ofSeconds(20))
                 .header("content-type", "text/plain")
                 .POST(HttpRequest.BodyPublishers.ofString(query, StandardCharsets.UTF_8))
@@ -173,5 +173,9 @@ public class QueryPopulator {
             }
             return lines;
         }
+    }
+
+    static String getBackend() {
+        return System.getenv().getOrDefault("BACKEND_HOST", "localhost");
     }
 }

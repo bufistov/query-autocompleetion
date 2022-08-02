@@ -31,7 +31,7 @@ services:
     depends_on:
       - cassandra
     restart: on-failure
-    command: bash -c "./gradlew bootrun"
+    command: bash -c "rm -rf .gradle/ && ./gradlew bootrun"
 
   frontend:
     image: node:latest
@@ -45,3 +45,16 @@ services:
       - webserver
     working_dir: /frontend
     command: bash -c "npm i && npm start"
+
+  query-populator:
+    image: openjdk:11-jdk-slim
+    environment:
+      - BACKEND_HOST=webserver
+      - BACKEND_PORT=8080
+    volumes:
+      - ./:/query-populator
+    working_dir: /query-populator
+    depends_on:
+      - webserver
+    restart: on-failure
+    command: bash -c "rm -rf .gradle/ && ./gradlew --no-daemon runPopulator --args aol_2006_1M_queries.txt.gz"
