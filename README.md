@@ -32,7 +32,7 @@ Notes:
 - The docker compose file
 exposes ports 8080 and 3000 to the local host, so these ports must be available.
 - The demo adds one million queries, and will use most of the CPU/disk
-bandwith of the host machine during few minutes.
+bandwith of the host machine during first 10-20 minutes.
 
 Start demo by typing this command from the root directory of this repository:
 
