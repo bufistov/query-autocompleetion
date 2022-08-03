@@ -3,7 +3,7 @@
 This repository contains backend implementation for query
 complete suggestion using 10 previous most frequent queries with the same
 prefix. A simple GUI is also provided to run demo interactively.
-Demo is started by executing command **docker compose up**.
+Demo is started by executing one command in OS command shell: **docker compose up**
 
 ![Demo logo](images/query_complete_demo_logo.png)
 
