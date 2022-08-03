@@ -5,9 +5,7 @@ complete suggestion using 10 previous most frequent queries with the same
 prefix. A simple GUI is also provided to run demo interactively.
 Demo is started by executing command **docker compose up**.
 
-|||
-|---------------------------------------------------------|-------------------------|
-| ![Query 'w'](images/query_autocomplete_demo_step1.png)  |  ![Query 'ww'](images/query_autocomplete_demo_step2.png)|
+![Demo logo](images/query_complete_demo_logo.png)
 
 This is mainly cassandra based implementation of [prefixy](https://prefixy.github.io/).
 [Medium post](https://medium.com/@prefixyteam/how-we-built-prefixy-a-scalable-prefix-search-service-for-powering-autocomplete-c20f98e2eff1)
