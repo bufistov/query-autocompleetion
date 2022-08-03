@@ -33,7 +33,7 @@ import java.util.zip.GZIPInputStream;
 
 @Log4j2
 public class QueryPopulator {
-    static final String DEFAULT_QUERY_FILE = "aol_2006_100K_queries.txt.gz";
+    static final String DEFAULT_QUERY_FILE = "queries/aol_2006_100K_queries.txt.gz";
     static final int DEFAULT_NUM_THREADS = 16;
 
     static final String DEFAULT_PREFIX_TO_COUNT = "www";
