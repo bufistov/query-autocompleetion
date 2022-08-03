@@ -1,4 +1,4 @@
-# Query autocompleetion demo
+# Query complete demo
 
 This repository contains backend implementation for query
 complete suggestion using 10 previous most frequent queries with the same
@@ -7,11 +7,11 @@ Demo is started by executing command **docker compose up**.
 
 ![Demo logo](images/query_complete_demo_logo.png)
 
-This is mainly cassandra based implementation of [prefixy](https://prefixy.github.io/).
+This is mainly a cassandra based implementation of [prefixy](https://prefixy.github.io/).
 [Medium post](https://medium.com/@prefixyteam/how-we-built-prefixy-a-scalable-prefix-search-service-for-powering-autocomplete-c20f98e2eff1)
 of the same document.
 
-## Main product requirements
+## Product Requirements
 
 - Get completions p90 latency <= 100ms.
 - 1000 queries per second, QPS, can be handled on my mac with 16GB of random access memory.
