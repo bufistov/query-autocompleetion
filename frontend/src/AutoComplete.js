@@ -98,7 +98,7 @@ const AutoComplete = () => {
       }
 
       return (
-        <form className="autocomplete" autocomplete="off" onSubmit={(e) => {
+        <form className="autocomplete" autoComplete="off" onSubmit={(e) => {
             console.log(value);
             e.preventDefault();
             addQuery(value);
