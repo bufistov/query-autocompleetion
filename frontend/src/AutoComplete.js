@@ -77,7 +77,7 @@ const AutoComplete = () => {
                   key={index}
                   onClick={handleClick}
                 >
-                  {suggestion}
+                  {<b>{value}</b>}{suggestion.substring(value.length)}
                 </li>
               );
             })}
