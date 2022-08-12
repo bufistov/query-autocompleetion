@@ -27,7 +27,7 @@ public class UpdateSuffixesUdtSet implements UpdateSuffixes {
     public TopKUpdateStatus updateTopKSuffixes(String query, Long count, String prefix, Long topK) {
         String suffix = query.substring(prefix.length());
         var topKSuffixes = storage.getTopKQueries(prefix);
-        var finalSet = new TreeSet<>(topKSuffixes.getTopK());
+        var finalSet = new TreeSet<>(topKSuffixes.getTopK1());
         while (finalSet.size() > topK) {
             finalSet.remove(finalSet.first());
         }
@@ -38,7 +38,7 @@ public class UpdateSuffixesUdtSet implements UpdateSuffixes {
         boolean addCurrentSuffix = currentSuffixUpdated
                 || (currentSuffix.isEmpty() && finalSet.size() < topK)
                 || (currentSuffix.isEmpty() && currentMin.get().getCount() < count);
-        boolean updated = addCurrentSuffix || topKSuffixes.getTopK().size() > topK;
+        boolean updated = addCurrentSuffix || topKSuffixes.getTopK1().size() > topK;
 
         if (currentSuffixUpdated) {
             finalSet.remove(currentSuffix.get());
@@ -54,7 +54,7 @@ public class UpdateSuffixesUdtSet implements UpdateSuffixes {
                         .count(count)
                         .build());
             }
-            boolean applied = storage.updateTopKQueries(prefix, finalSet, topKSuffixes.getVersion());
+            boolean applied = storage.updateTopK1Queries(prefix, finalSet, topKSuffixes.getVersion());
             if (!applied) {
                 return CONDITION_FAILED;
             }
@@ -68,7 +68,7 @@ public class UpdateSuffixesUdtSet implements UpdateSuffixes {
         if (suffixCount == null) {
             return List.of();
         }
-        return suffixCount.getTopK().stream().sorted()
+        return suffixCount.getTopK1().stream().sorted()
                 .map(sc -> SuffixCount.builder()
                         .count(sc.getCount())
                         .suffix(sc.getSuffix())

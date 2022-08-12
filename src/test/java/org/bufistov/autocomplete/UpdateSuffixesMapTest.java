@@ -47,7 +47,7 @@ public class UpdateSuffixesMapTest {
     private final static long VERSION = 1;
 
     private final static PrefixTopK TOPK_SUFFIXES = PrefixTopK.builder()
-            .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT))
+            .topK(Map.of(SUFFIX1, SUFFIX1_COUNT))
             .version(VERSION)
             .build();
 
@@ -81,7 +81,7 @@ public class UpdateSuffixesMapTest {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(TOPK_SUFFIXES);
         when(storage.addSuffixes(updatePrefixCaptor.capture(), newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
-        when(storage.updateTopK1Queries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
                 newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
     }
@@ -90,7 +90,7 @@ public class UpdateSuffixesMapTest {
     void test_addNewSuffix_success() {
         var result = updateSuffixesMap.updateTopKSuffixes(QUERY, NEW_COUNTER_VALUE, PREFIX, TOPK);
         assertThat(result, is(SUCCESS));
-        verify(storage, never()).updateTopK1Queries(any(), any(), any(), any());
+        verify(storage, never()).updateTopKQueries(any(), any(), any(), any());
         assertThat(getPrefixCaptor.getValue(), is(PREFIX));
         assertThat(updatePrefixCaptor.getValue(), is(PREFIX));
         assertThat(newSuffixesCaptor.getValue(), is(Map.of("so", NEW_COUNTER_VALUE)));
@@ -101,13 +101,13 @@ public class UpdateSuffixesMapTest {
     void test_addNewSuffixOverride_success() {
 
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of("so", NEW_COUNTER_VALUE - 1))
+                .topK(Map.of("so", NEW_COUNTER_VALUE - 1))
                 .version(VERSION)
                 .build());
 
         var result = updateSuffixesMap.updateTopKSuffixes(QUERY, NEW_COUNTER_VALUE, PREFIX, TOPK);
         assertThat(result, is(SUCCESS));
-        verify(storage, never()).updateTopK1Queries(any(), any(), any(), any());
+        verify(storage, never()).updateTopKQueries(any(), any(), any(), any());
         assertThat(getPrefixCaptor.getValue(), is(PREFIX));
         assertThat(updatePrefixCaptor.getValue(), is(PREFIX));
         assertThat(newSuffixesCaptor.getValue(), is(Map.of("so", NEW_COUNTER_VALUE)));
@@ -118,19 +118,19 @@ public class UpdateSuffixesMapTest {
     void test_addNewSuffixOverrideSmallValue_noUpdate() {
 
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of("so", NEW_COUNTER_VALUE + 1))
+                .topK(Map.of("so", NEW_COUNTER_VALUE + 1))
                 .version(VERSION)
                 .build());
         var result = updateSuffixesMap.updateTopKSuffixes(QUERY, NEW_COUNTER_VALUE, PREFIX, TOPK);
         assertThat(result, is(NO_UPDATE_REQUIRED));
-        verify(storage, never()).updateTopK1Queries(any(), any(), any(), any());
+        verify(storage, never()).updateTopKQueries(any(), any(), any(), any());
         verify(storage, never()).addSuffixes(any(), any(), any());
     }
 
     @Test
     void test_replaceCurrentSuffix_success() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE - 1))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE - 1))
                 .version(VERSION)
                 .build());
 
@@ -140,7 +140,7 @@ public class UpdateSuffixesMapTest {
                  .thenReturn(true);
         var result = updateSuffixesMap.updateTopKSuffixes(QUERY, NEW_COUNTER_VALUE, PREFIX, TOPK);
         assertThat(result, is(SUCCESS));
-        verify(storage, never()).updateTopK1Queries(any(), any(), any(), any());
+        verify(storage, never()).updateTopKQueries(any(), any(), any(), any());
         assertThat(updatePrefixCaptor.getValue(), is(PREFIX));
         assertThat(updateSuffixCaptor.getValue(), is("so"));
         assertThat(newValueCaptor.getValue(), is(NEW_COUNTER_VALUE));
@@ -150,11 +150,11 @@ public class UpdateSuffixesMapTest {
     @Test
     void test_replaceCurrentMin_success() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
                 .version(VERSION)
                 .build());
 
-        when(storage.updateTopK1Queries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
                 newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         String query = "quell";
@@ -170,46 +170,46 @@ public class UpdateSuffixesMapTest {
     @Test
     void test_smallValue_noUpdate() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
                 .version(VERSION)
                 .build());
 
-        when(storage.updateTopK1Queries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
                 newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         String query = "quell";
         Long newValue = 0L;
         var result = updateSuffixesMap.updateTopKSuffixes(query, newValue, PREFIX, TOPK);
         assertThat(result, is(NO_UPDATE_REQUIRED));
-        verify(storage, never()).updateTopK1Queries(any(), any(), any(), any());
+        verify(storage, never()).updateTopKQueries(any(), any(), any(), any());
         verify(storage, never()).addSuffixes(any(), any(), any());
     }
 
     @Test
     void test_staleValue_noUpdate() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
                 .version(VERSION)
                 .build());
 
-        when(storage.updateTopK1Queries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
                 newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         Long newValue = 0L;
         var result = updateSuffixesMap.updateTopKSuffixes(QUERY, newValue, PREFIX, TOPK);
         assertThat(result, is(NO_UPDATE_REQUIRED));
-        verify(storage, never()).updateTopK1Queries(any(), any(), any(), any());
+        verify(storage, never()).updateTopKQueries(any(), any(), any(), any());
         verify(storage, never()).addSuffixes(any(), any(), any());
     }
 
     @Test
     void test_replaceCurrentMin_conditionFailed() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
                 .version(VERSION)
                 .build());
 
-        when(storage.updateTopK1Queries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
                 newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(false);
         String query = "quell";
@@ -224,7 +224,7 @@ public class UpdateSuffixesMapTest {
     @Test
     void test_configChange_success() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
                 .version(VERSION)
                 .build());
 
@@ -235,7 +235,7 @@ public class UpdateSuffixesMapTest {
                         removeSuffixVersion.capture()))
                 .thenReturn(true);
 
-        when(storage.updateTopK1Queries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
                 newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         String query = "quell";
@@ -254,7 +254,7 @@ public class UpdateSuffixesMapTest {
     @Test
     void test_configChange_updateFailed() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
                 .version(VERSION)
                 .build());
 
@@ -271,13 +271,13 @@ public class UpdateSuffixesMapTest {
         assertThat(removeSuffixPrefix.getValue(), is(PREFIX));
         assertThat(removeSuffixVersion.getValue(), is(VERSION));
         assertThat(setArgumentCaptor.getValue(), is(Set.of(SUFFIX1)));
-        verify(storage, never()).updateTopK1Queries(any(), any(), any(), any());
+        verify(storage, never()).updateTopKQueries(any(), any(), any(), any());
     }
 
     @Test
     void test_configChangeNullVersion_success() {
         when(storage.getTopKQueries(getPrefixCaptor.capture())).thenReturn(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
+                .topK(Map.of(SUFFIX1, SUFFIX1_COUNT, SUFFIX2, SUFFIX2_COUNT, "so", NEW_COUNTER_VALUE))
                 .version(null)
                 .build());
 
@@ -288,7 +288,7 @@ public class UpdateSuffixesMapTest {
                 removeSuffixVersion.capture()))
                 .thenReturn(true);
 
-        when(storage.updateTopK1Queries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
+        when(storage.updateTopKQueries(updatePrefixCaptor.capture(), toRemoveCaptor.capture(),
                 newSuffixesCaptor.capture(), versionCaptor.capture()))
                 .thenReturn(true);
         String query = "quell";
@@ -307,7 +307,7 @@ public class UpdateSuffixesMapTest {
     @Test
     void test_toSortedListNonNull_success() {
         assertThat(updateSuffixesMap.toSortedList(PrefixTopK.builder()
-                .topK1(Map.of(SUFFIX2, SUFFIX2_COUNT, SUFFIX1, SUFFIX1_COUNT, "3", 3L))
+                .topK(Map.of(SUFFIX2, SUFFIX2_COUNT, SUFFIX1, SUFFIX1_COUNT, "3", 3L))
                 .build()), is(List.of(toSuffixCount(SUFFIX1, SUFFIX1_COUNT),
                 toSuffixCount(SUFFIX2, SUFFIX2_COUNT),
                 toSuffixCount("3", 3L)

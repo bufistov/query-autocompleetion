@@ -24,8 +24,8 @@ import static org.bufistov.Constants.PREFIX_TOPK;
 public class PrefixTopKCassandra {
     @PartitionKey
     private String prefix;
-    private Set<SuffixCount> topK; // top K suffixes for given prefix
-    private Map<String, Long> topK1; // top K suffixes for given prefix
-    private Set<TupleValue> topK2;//
-    private Long version;
+    private Map<String, Long> topK; // top K suffixes for given prefix
+    private Set<SuffixCount> topK1;
+    private Set<TupleValue> topK2;
+    private Long version; // Version for the atomic updates
 }

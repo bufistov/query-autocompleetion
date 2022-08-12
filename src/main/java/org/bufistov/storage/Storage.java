@@ -21,7 +21,7 @@ public interface Storage {
      * @param version Version that ensures atomic read/modify/write operation
      * @return true if update was successfull, false if condition
      */
-    boolean updateTopKQueries(String prefix, Set<SuffixCount> newTopK, Long version);
+    boolean updateTopK1Queries(String prefix, Set<SuffixCount> newTopK, Long version);
 
     /**
      * Add new entries to the suffix map.
@@ -49,7 +49,7 @@ public interface Storage {
      * @param version version for atomic update
      * @return true if update was applied false otherwise
      */
-    boolean updateTopK1Queries(String prefix, Set<String> toRemove, Map<String, Long> toAdd, Long version);
+    boolean updateTopKQueries(String prefix, Set<String> toRemove, Map<String, Long> toAdd, Long version);
 
     /**
      * Replace value for one suffix in topK map.

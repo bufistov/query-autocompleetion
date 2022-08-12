@@ -126,8 +126,8 @@ public class CassandraQueriesTest {
     void test_addNewEntryQuery_success() {
         assertThat(cassandraStorage.addSuffixes(prefix, Map.of(TEST_KEY, TEST_VALUE), null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of(TEST_KEY, TEST_VALUE))
+                .topK1(Set.of())
+                .topK(Map.of(TEST_KEY, TEST_VALUE))
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
@@ -135,8 +135,8 @@ public class CassandraQueriesTest {
         Long newValue = 23L;
         assertThat(cassandraStorage.addSuffixes(prefix, Map.of(TEST_KEY, newValue), TEST_NEW_VERSION), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of(TEST_KEY, newValue))
+                .topK1(Set.of())
+                .topK(Map.of(TEST_KEY, newValue))
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 1)
                 .build()));
@@ -148,8 +148,8 @@ public class CassandraQueriesTest {
         var newValues = Map.of(TEST_KEY, TEST_VALUE, key2, TEST_VALUE);
         assertThat(cassandraStorage.addSuffixes(prefix, newValues, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(newValues)
+                .topK1(Set.of())
+                .topK(newValues)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
@@ -161,16 +161,16 @@ public class CassandraQueriesTest {
         var newValues = Map.of(TEST_KEY, TEST_VALUE, key2, TEST_VALUE);
         assertThat(cassandraStorage.addSuffixes(prefix, newValues, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(newValues)
+                .topK1(Set.of())
+                .topK(newValues)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
 
         assertThat(cassandraStorage.removeSuffixes(prefix, Set.of(key2), TEST_NEW_VERSION), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of(TEST_KEY, TEST_VALUE))
+                .topK1(Set.of())
+                .topK(Map.of(TEST_KEY, TEST_VALUE))
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 1)
                 .build()));
@@ -182,16 +182,16 @@ public class CassandraQueriesTest {
         var newValues = Map.of(TEST_KEY, TEST_VALUE, key2, TEST_VALUE);
         assertThat(cassandraStorage.addSuffixes(prefix, newValues, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(newValues)
+                .topK1(Set.of())
+                .topK(newValues)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
 
         assertThat(cassandraStorage.removeSuffixes(prefix, Set.of("nonExistingKey"), TEST_NEW_VERSION), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(newValues)
+                .topK1(Set.of())
+                .topK(newValues)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 1)
                 .build()));
@@ -201,8 +201,8 @@ public class CassandraQueriesTest {
     void test_removeEmptySet_success() {
         assertThat(cassandraStorage.removeSuffixes("prefix", Set.of(), null), is(true));
         assertThat(cassandraStorage.getTopKQueries("prefix"), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of())
+                .topK1(Set.of())
+                .topK(Map.of())
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
@@ -212,42 +212,42 @@ public class CassandraQueriesTest {
     void test_updateTopK1_success() {
         assertThat(cassandraStorage.addSuffixes(prefix, TEST_SUFFIXES, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(TEST_SUFFIXES)
+                .topK1(Set.of())
+                .topK(TEST_SUFFIXES)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
 
         String newSuffix = getRandomPrefix();
         Long newValue = 123L;
-        assertThat(cassandraStorage.updateTopK1Queries(prefix, Set.of(),
+        assertThat(cassandraStorage.updateTopKQueries(prefix, Set.of(),
                 Map.of(newSuffix, newValue), TEST_NEW_VERSION), is(true));
         HashMap<String, Long> expectedMap = new HashMap<>(TEST_SUFFIXES);
         expectedMap.put(newSuffix, newValue);
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(expectedMap)
+                .topK1(Set.of())
+                .topK(expectedMap)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 1)
                 .build()));
 
-        assertThat(cassandraStorage.updateTopK1Queries(prefix, Set.of(TEST_KEY),
+        assertThat(cassandraStorage.updateTopKQueries(prefix, Set.of(TEST_KEY),
                 Map.of(), TEST_NEW_VERSION + 1), is(true));
         expectedMap.remove(TEST_KEY);
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(expectedMap)
+                .topK1(Set.of())
+                .topK(expectedMap)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 2)
                 .build()));
 
-        assertThat(cassandraStorage.updateTopK1Queries(prefix, Set.of(TEST_KEY, "key2"),
+        assertThat(cassandraStorage.updateTopKQueries(prefix, Set.of(TEST_KEY, "key2"),
                 Map.of("key5", 5L), TEST_NEW_VERSION + 2), is(true));
         expectedMap.remove("key2");
         expectedMap.put("key5", 5L);
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(expectedMap)
+                .topK1(Set.of())
+                .topK(expectedMap)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 3)
                 .build()));
@@ -257,8 +257,8 @@ public class CassandraQueriesTest {
     void test_updateExisting_success() {
         assertThat(cassandraStorage.addSuffixes(prefix, TEST_SUFFIXES, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(TEST_SUFFIXES)
+                .topK1(Set.of())
+                .topK(TEST_SUFFIXES)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
@@ -268,8 +268,8 @@ public class CassandraQueriesTest {
         HashMap<String, Long> expectedMap = new HashMap<>(TEST_SUFFIXES);
         expectedMap.put(TEST_KEY, newValue);
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(expectedMap)
+                .topK1(Set.of())
+                .topK(expectedMap)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 1)
                 .build()));
@@ -289,8 +289,8 @@ public class CassandraQueriesTest {
                 .pollInterval(5, TimeUnit.SECONDS)
                 .until(() -> fastStorage.getTopKQueries(prefix), is(
                         PrefixTopK.builder()
-                                .topK(Set.of())
-                                .topK1(Map.of(TEST_KEY, TEST_VALUE, TEST_KEY2, TEST_VALUE2))
+                                .topK1(Set.of())
+                                .topK(Map.of(TEST_KEY, TEST_VALUE, TEST_KEY2, TEST_VALUE2))
                                 .topK2(List.of())
                                 .version(null) // version is also evicted, as it is always updated
                                 .build())
@@ -301,8 +301,8 @@ public class CassandraQueriesTest {
     void test_updateNonExisting_entryCreated() {
         assertThat(cassandraStorage.addSuffixes(prefix, TEST_SUFFIXES, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(TEST_SUFFIXES)
+                .topK1(Set.of())
+                .topK(TEST_SUFFIXES)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION)
                 .build()));
@@ -313,8 +313,8 @@ public class CassandraQueriesTest {
         HashMap<String, Long> expectedMap = new HashMap<>(TEST_SUFFIXES);
         expectedMap.put(newKey, newValue);
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(expectedMap)
+                .topK1(Set.of())
+                .topK(expectedMap)
                 .topK2(List.of())
                 .version(TEST_NEW_VERSION + 1)
                 .build()));
@@ -324,8 +324,8 @@ public class CassandraQueriesTest {
     void test_updateTopK2_success() {
         assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(), TEST_SUFFIXES2, null), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of())
+                .topK1(Set.of())
+                .topK(Map.of())
                 .topK2(List.of(getSuffix(TEST_VALUE, TEST_KEY), getSuffix(TEST_VALUE2, TEST_KEY2)))
                 .version(TEST_NEW_VERSION)
                 .build()));
@@ -336,8 +336,8 @@ public class CassandraQueriesTest {
                 Set.of(TUPLE_TYPE.newValue(newValue, newSuffix)), TEST_NEW_VERSION), is(true));
 
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of())
+                .topK1(Set.of())
+                .topK(Map.of())
                 .topK2(List.of(getSuffix(TEST_VALUE, TEST_KEY),
                         getSuffix(TEST_VALUE2, TEST_KEY2),
                         getSuffix(newValue, newSuffix)
@@ -348,8 +348,8 @@ public class CassandraQueriesTest {
         assertThat(cassandraStorage.updateTopK2Queries(prefix, Set.of(TUPLE_TYPE.newValue(TEST_VALUE, TEST_KEY)),
                 Set.of(), TEST_NEW_VERSION + 1), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of())
+                .topK1(Set.of())
+                .topK(Map.of())
                 .topK2(List.of(getSuffix(TEST_VALUE2, TEST_KEY2),
                         getSuffix(newValue, newSuffix)
                 ))
@@ -362,8 +362,8 @@ public class CassandraQueriesTest {
                 Set.of(TUPLE_TYPE.newValue(5L, "key5")),
                 TEST_NEW_VERSION + 2), is(true));
         assertThat(cassandraStorage.getTopKQueries(prefix), is(PrefixTopK.builder()
-                .topK(Set.of())
-                .topK1(Map.of())
+                .topK1(Set.of())
+                .topK(Map.of())
                 .topK2(List.of(getSuffix(5L, "key5"),
                         getSuffix(newValue, newSuffix)))
                 .version(TEST_NEW_VERSION + 3)

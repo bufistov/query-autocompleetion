@@ -66,46 +66,46 @@ public class CassandraStorage implements Storage {
     public PrefixTopK getTopKQueries(String prefix) {
         return Optional.ofNullable(topKMapper.get(prefix))
                 .map(item -> PrefixTopK.builder()
-                        .topK(Optional.ofNullable(item.getTopK()).orElse(Set.of()))
-                        .topK1(Optional.ofNullable(item.getTopK1()).orElse(Map.of()))
+                        .topK(Optional.ofNullable(item.getTopK()).orElse(Map.of()))
+                        .topK1(Optional.ofNullable(item.getTopK1()).orElse(Set.of()))
                         .topK2(toSuffixCount(item.getTopK2()))
                         .version(item.getVersion()).build())
                 .orElse(PrefixTopK.builder()
-                        .topK(Set.of())
-                        .topK1(Map.of())
+                        .topK1(Set.of())
+                        .topK(Map.of())
                         .topK2(List.of())
                         .build());
     }
 
     @Override
-    public boolean updateTopKQueries(String prefix, Set<SuffixCount> newTopK, Long version) {
-        return cassandraQueries.updateTopK(prefix, newTopK, version, getNewVersion(version))
+    public boolean updateTopK1Queries(String prefix, Set<SuffixCount> newTopK, Long version) {
+        return cassandraQueries.updateTopK1(prefix, newTopK, version, getNewVersion(version))
                 .wasApplied();
     }
 
     @Override
     public boolean addSuffixes(String prefix, Map<String, Long> suffixes, Long version) {
-        return cassandraQueries.updateTopK1(prefix, Set.of(), suffixes,
+        return cassandraQueries.updateTopK(prefix, Set.of(), suffixes,
                 version, getNewVersion(version),
                 topKTtl).wasApplied();
     }
 
     @Override
     public boolean removeSuffixes(String prefix, Set<String> suffixes, Long version) {
-        return cassandraQueries.updateTopK1(prefix, suffixes, Map.of(), version, getNewVersion(version),
+        return cassandraQueries.updateTopK(prefix, suffixes, Map.of(), version, getNewVersion(version),
                         topKTtl)
                 .wasApplied();
     }
 
     @Override
-    public boolean updateTopK1Queries(String prefix, Set<String> toRemove, Map<String, Long> toAdd, Long version) {
-         return cassandraQueries.updateTopK1(prefix, toRemove, toAdd, version, getNewVersion(version),
+    public boolean updateTopKQueries(String prefix, Set<String> toRemove, Map<String, Long> toAdd, Long version) {
+         return cassandraQueries.updateTopK(prefix, toRemove, toAdd, version, getNewVersion(version),
                  topKTtl).wasApplied();
     }
 
     @Override
     public boolean replaceSuffixCounter(String prefix, String suffix, Long newValue, Long version) {
-        return cassandraQueries.updateTopK1(prefix, Set.of(), Map.of(suffix, newValue),
+        return cassandraQueries.updateTopK(prefix, Set.of(), Map.of(suffix, newValue),
                         version, getNewVersion(version), topKTtl)
                 .wasApplied();
     }

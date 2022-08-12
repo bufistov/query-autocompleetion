@@ -31,7 +31,7 @@ public class UpdateSuffixesMap implements UpdateSuffixes {
     @Override
     public TopKUpdateStatus updateTopKSuffixes(String query, Long count, String prefix, Long topK) {
         var result = storage.getTopKQueries(prefix);
-        var topKSuffixes = result.getTopK1();
+        var topKSuffixes = result.getTopK();
         Long currentVersion = result.getVersion();
         if (topKSuffixes.size() > topK) {
             // Special case when topK parameter was decreased. We need to prune extra suffixes from the table.
@@ -55,7 +55,7 @@ public class UpdateSuffixesMap implements UpdateSuffixes {
                     return getStatus(storage.replaceSuffixCounter(prefix, suffix, count, currentVersion));
                 }
             } else if (count > currentMin.getValue()) {
-                return getStatus(storage.updateTopK1Queries(prefix, Set.of(currentMin.getKey()),
+                return getStatus(storage.updateTopKQueries(prefix, Set.of(currentMin.getKey()),
                         Map.of(suffix, count), currentVersion));
             }
         }
@@ -67,7 +67,7 @@ public class UpdateSuffixesMap implements UpdateSuffixes {
         if (suffixCount == null) {
             return List.of();
         }
-        return suffixCount.getTopK1().entrySet().stream()
+        return suffixCount.getTopK().entrySet().stream()
                 .map(x -> SuffixCount.builder()
                         .count(x.getValue())
                         .suffix(x.getKey())

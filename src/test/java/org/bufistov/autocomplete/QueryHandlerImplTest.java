@@ -309,7 +309,7 @@ public class QueryHandlerImplTest {
         long count2 = 1;
         when(storage.getTopKQueries(prefixCaptor.capture()))
                 .thenReturn(PrefixTopK.builder()
-                        .topK1(Map.of(suffix1, count1, suffix2, count2))
+                        .topK(Map.of(suffix1, count1, suffix2, count2))
                         .build());
         assertThat(queryHandler.getQueries("que"), is(TopKQueries.builder()
                 .queries(List.of(getSuffixCount("query2", count2),
