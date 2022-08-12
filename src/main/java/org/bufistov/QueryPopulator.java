@@ -68,6 +68,11 @@ public class QueryPopulator {
         Map<String, Long> counted = queries.parallelStream().collect(
                 Collectors.groupingBy(Function.identity(),Collectors.counting()));
         log.info("{} unique queries", counted.size());
+        log.info("At most 1, 2, 4, 9 queries: {} {} {} {}", countQueries(counted, 1),
+                countQueries(counted, 2),
+                countQueries(counted, 4),
+                countQueries(counted, 9)
+                );
         var mostFrequent = Collections.max(counted.entrySet(),
                 (x,  y) -> (int) (x.getValue() - y.getValue()));
         log.info("Most frequent query: '{}' count: {}", mostFrequent.getKey(), mostFrequent.getValue());
@@ -177,5 +182,12 @@ public class QueryPopulator {
 
     static String getBackend() {
         return System.getenv().getOrDefault("BACKEND_HOST", "localhost");
+    }
+
+    static long countQueries(Map<String, Long> counted, int maxCount) {
+        return counted.entrySet().parallelStream()
+                .map(Map.Entry::getValue)
+                .filter(x -> x <= maxCount)
+                .count();
     }
 }
