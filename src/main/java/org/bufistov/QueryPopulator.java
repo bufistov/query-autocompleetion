@@ -73,6 +73,24 @@ public class QueryPopulator {
                 countQueries(counted, 4),
                 countQueries(counted, 9)
                 );
+        log.info("Total length of singletone queries: {}",
+                totalLengthOfQueries(counted, 1, 1)
+        );
+        log.info("Total length of non-singletone queries: {}",
+                totalLengthOfQueries(counted, 2, 1000)
+        );
+        log.info("Total length of filtered queries: {}",
+                totalLengthOfQueries(counted, 1, 2)
+        );
+        log.info("Total length of non-filtered queries: {}",
+                totalLengthOfQueries(counted, 3, 1000)
+        );
+        log.info("Average length of filtered queries: {}",
+                averageLengthOfQueries(counted, 1, 2)
+        );
+        log.info("Average length of non-filtered queries: {}",
+                averageLengthOfQueries(counted, 3, 1000)
+        );
         var mostFrequent = Collections.max(counted.entrySet(),
                 (x,  y) -> (int) (x.getValue() - y.getValue()));
         log.info("Most frequent query: '{}' count: {}", mostFrequent.getKey(), mostFrequent.getValue());
@@ -189,5 +207,23 @@ public class QueryPopulator {
                 .map(Map.Entry::getValue)
                 .filter(x -> x <= maxCount)
                 .count();
+    }
+
+    static long totalLengthOfQueries(Map<String, Long> counted, long minCount, long maxCount) {
+        return counted.entrySet().parallelStream()
+                .filter(x -> x.getValue() <= maxCount && x.getValue() >= minCount)
+                .mapToLong(x -> x.getKey().length() * x.getValue())
+                .sum();
+    }
+
+    static long averageLengthOfQueries(Map<String, Long> counted, long minCount, long maxCount) {
+        long total = counted.entrySet().parallelStream()
+                .filter(x -> x.getValue() <= maxCount && x.getValue() >= minCount)
+                .mapToLong(Map.Entry::getValue)
+                .sum();
+        return counted.entrySet().parallelStream()
+                .filter(x -> x.getValue() <= maxCount && x.getValue() >= minCount)
+                .mapToLong(x -> x.getKey().length() * x.getValue())
+                .sum() / total;
     }
 }
