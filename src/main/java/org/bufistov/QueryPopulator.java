@@ -100,7 +100,7 @@ public class QueryPopulator {
                 .reduce(0L, Long::sum);
         log.info("Queries with prefix '{}' {}", prefixToCount, withGivenPrefix);
         log.info("Max query length: {}", queries.stream().map(String::length).max(Integer::compareTo).get());
-        log.info("Average query length: {}", queries.stream().map(String::length).reduce(0, Integer::sum) / queries.size());
+        log.info("Average query length: {}", queries.stream().map(String::length).reduce(0, Integer::sum) / (double)queries.size());
         log.info("Queries > 100: {}", queries.stream().filter(q -> q.length() > 100).count());
         log.info("Queries > 50: {}", queries.stream().filter(q -> q.length() > 50).count());
         log.info("Queries > 20: {}", queries.stream().filter(q -> q.length() > 20).count());
