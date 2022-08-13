@@ -13,7 +13,7 @@
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy />
-                <SizeBasedTriggeringPolicy size="10 MB" />
+                <SizeBasedTriggeringPolicy size="50 MB" />
             </Policies>
             <DefaultRolloverStrategy fileIndex="max" />
         </RollingFile>
@@ -24,6 +24,10 @@
             <AppenderRef ref="rollingFileAppender"/>
         </Root>
         <Logger name="org.bufistov" level="${env:ORG_BUFISTOV_LOG_LEVEL:-info}" additivity="false">
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="rollingFileAppender"/>
+        </Logger>
+        <Logger name="org.bufistov.autocomplete.QueryHandlerImpl" level="${env:ORG_BUFISTOV_AUTOCOMPLETE_QUERY_HANDLER_LOG_LEVEL:-info}" additivity="false">
             <AppenderRef ref="console"/>
             <AppenderRef ref="rollingFileAppender"/>
         </Logger>
