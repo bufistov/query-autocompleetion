@@ -31,7 +31,7 @@
             <AppenderRef ref="console"/>
             <AppenderRef ref="rollingFileAppender"/>
         </Logger>
-        <Logger name="com.datastax.driver.core.QueryLogger.NORMAL" level="info" additivity="false">
+        <Logger name="com.datastax.driver.core.QueryLogger.NORMAL" level="${env:CASSANDRA_QUERY_LOGGER_LOG_LEVEL:-info}" additivity="false">
             <AppenderRef ref="console"/>
             <AppenderRef ref="rollingFileAppender"/>
         </Logger>
