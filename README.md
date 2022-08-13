@@ -69,7 +69,7 @@ Once all services are up and running open this link in browser:
 http://localhost:3000
 
 type queries in the text box. On 'enter' key press query is actually
-added into database. Notice, that the query must be added at least 3 times (press enter 3 times)
+added into database. Notice, that the query must be added at least 5 times (press enter 5 times)
 for the first topK rank update. Later updates for the same query
 happen every 10 new occurrence or every 5 seconds.
 

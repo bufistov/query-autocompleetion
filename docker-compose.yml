@@ -21,7 +21,7 @@ services:
     image: openjdk:11-jdk-slim
     environment:
       - ORG_BUFISTOV_STORAGE_CASSANDRA_HOST=cassandra
-      - ORG_BUFISTOV_AUTOCOMPLETE_FIRST_QUERY_UPDATE_COUNT=3
+      - ORG_BUFISTOV_AUTOCOMPLETE_FIRST_QUERY_UPDATE_COUNT=5
       - ORG_BUFISTOV_LOG_LEVEL=info
       - SERVER_PORT=8080
     volumes:
